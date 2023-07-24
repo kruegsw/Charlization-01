@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+      var canvas = document.getElementById('gameCanvas');
+      var context = canvas.getContext('2d');
+      var isDrawing = false;
+      var lines = []; // Array to store lines
+      var clientId; // Client identifier
+      var clientColor; // Client color
+
+      // Connect to the WebSocket server
+      var ws = new WebSocket('ws://69.48.163.56:1234');
+
+      // When a message is received from the server
+      ws.onmessage = function(event) {
+        console.log(event);
+        try {
+          // Parse the message from the server
+          var message = JSON.parse(event.data);
+          var receivedId = message.id;
+          var position = JSON.parse(message.data);
+
+          // Clear the canvas
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Draw a dot at the received position
+          context.beginPath();
+          context.arc(position.x, position.y, 10, 0, 2 * Math.PI);
+          context.fillStyle = position.color;
+          context.fill();
+
+          // Draw all stored lines for other clients
+          for (var i = 0; i < lines.length; i++) {
+            if (lines[i].id !== receivedId) {
+              context.beginPath();
+              context.moveTo(lines[i].startX, lines[i].startY);
+              context.lineTo(lines[i].endX, lines[i].endY);
+              context.strokeStyle = lines[i].color;
+              context.lineWidth = 3;
+              context.stroke();
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing message:', error);
+        }
+      };
+
+      // When the mouse is moved over the canvas
+      canvas.onmousemove = function(event) {
+        // Send the mouse position and client color to the server along with the client identifier
+        ws.send(
+          JSON.stringify({
+            id: clientId,
+            data: JSON.stringify({ x: event.clientX, y: event.clientY, color: clientColor }),
+          })
+        );
+
+        if (isDrawing) {
+          // Store the drawn line with start and end positions, client identifier, and client color
+          lines.push({
+            id: clientId,
+            startX: lines[lines.length - 1].endX,
+            startY: lines[lines.length - 1].endY,
+            endX: event.clientX,
+            endY: event.clientY,
+            color: clientColor,
+          });
+        }
+      };
+
+      // When the left mouse button is pressed
+      canvas.onmousedown = function(event) {
+        if (event.button === 0) {
+          isDrawing = true;
+          // Store the initial position of the line, client identifier, and client color
+          lines.push({
+            id: clientId,
+            startX: event.clientX,
+            startY: event.clientY,
+            endX: event.clientX,
+            endY: event.clientY,
+            color: clientColor,
+          });
+        }
+      };
+
+      // When the left mouse button is released
+      canvas.onmouseup = function(event) {
+        if (event.button === 0) {
+          isDrawing = false;
+        }
+      };
+
+      // Generate a unique identifier for the client
+      function generateUniqueId() {
+        return Math.random().toString(36).substr(2, 9);
+      }
+
+      // Assign a unique identifier and color to the client and send them to the server
+      clientId = generateUniqueId();
+      clientColor = generateRandomColor();
+      ws.onopen = function() {
+        console.log('Connected to the WebSocket server');
+        ws.send(JSON.stringify({ id: clientId, color: clientColor }));
+      };
+
+      // Generate a random color for the client
+      function generateRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+      }
+    </script>
+  </body>
+</html>
