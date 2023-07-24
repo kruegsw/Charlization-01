@@ -26,8 +26,8 @@ wss.on('connection', (ws) => {
     const parsedMessage = JSON.parse(message.toString());
     const senderId = parsedMessage.id;
     const color = getClientColor(senderId);
-    //console.log(parsedMessage);
-    const data = JSON.stringify({ x: parsedMessage.data.x, y: parsedMessage.data.y, color: color });
+    console.log(parsedMessage);
+    const data = JSON.stringify({ x: parsedMessage.x, y: parsedMessage.y, color: color });
 
     // Broadcast the message to all connected clients
     clients.forEach((client) => {
