@@ -95,14 +95,24 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }))
+
+// Express Messages Middleware
+//app.use(require('connect-flash')());
+//app.use(function (req, res, next) {
+//  res.locals.messages = require('express-messages')(req, res);
+//  next();
+//});
+
 app.use(passport.initialize())
 app.use(passport.session())
 //app.use(methodOverride('_method'))
 
 app.get('/', checkAuthenticated, (req, res) => {
     console.log("app.get / middleware")
-    console.log("req,user: " + JSON.stringify(req.user))
-    res.render('index.ejs', { username: req.user.username })
+    console.log("req.user: " + JSON.stringify(req.user))
+    console.log("req.session.passport.user: " + req.session.passport.user )
+    res.render('index.ejs', { username: req.session.passport.user.username })
+    //console.log(req)
 })
 
 app.get('/login', checkNotAuthenticated, (req, res) => {
@@ -160,6 +170,7 @@ app.post('/logout', function(req, res, next) {
     console.log("app.post /logout middleware")
     req.logout(function(err) {
         if (err) { return next(err); }
+        //req.flash('success', 'You are logged out');
         res.redirect('/');
     });
 });
@@ -183,6 +194,8 @@ function checkNotAuthenticated(req, res, next) {
 }
 
 const userRouter = require('./routes/users')
-app.use('/users', userRouter)
+const gameRouter = require('./routes/games')
+app.use('/users', checkAuthenticated, userRouter)
+app.use('/games', checkAuthenticated, gameRouter)
 
 app.listen(3000)

@@ -25,7 +25,9 @@ async function initialize(passport, getUserByUsername, getUserById) {
   }
 
 passport.use(new LocalStrategy({ /*usernameField: 'email'*/ }, authenticateUser))
-  passport.serializeUser((user, done) => done(null, user.id))
+
+  //passport.serializeUser((user, done) => done(null, user.id))    <-- used to say this, still works when returning 'user' rather than 'user.id'
+  passport.serializeUser((user, done) => done(null, user)) // returns 'user' to passport, which is accessible via 'req.session.passport.user'
   passport.deserializeUser((id, done) => done(null, getUserById(id)))
 }
 

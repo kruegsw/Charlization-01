@@ -1,4 +1,25 @@
-<h1>Hi <%= username %></h1>
-<form action="/logout" method="POST">
-  <button type="submit">Log Out</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <style></style>
+</head>
+
+<body>
+  <div class="navbar">
+      <a href="/games">Lobby</a>
+      <a id="navbar-username"><%= username %></a>
+      <!-- <a href="#" id="logout-button">${logButtonText}</a> -->
+      <form action="/logout" method="POST">
+        <button type="submit">Log Out</button>
+      </form>
+  </div>
+
+</body>
+
+</html>
