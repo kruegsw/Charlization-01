@@ -115,6 +115,10 @@ app.get('/', checkAuthenticated, (req, res) => {
     //console.log(req)
 })
 
+app.get('/about', checkAuthenticated, (req, res) => {
+    res.render('about.ejs', { username: req.session.passport.user.username })
+})
+
 app.get('/login', checkNotAuthenticated, (req, res) => {
     console.log("app.get /login middleware")
     res.render('login.ejs')
