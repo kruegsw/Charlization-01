@@ -73,6 +73,7 @@ const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
 //const methodOverride = require('method-override')
+const MongoStore = require('connect-mongo');
 
 app.use(express.static("public"))
 //app.use(express.urlencoded({ extended: true }))
@@ -93,8 +94,17 @@ app.use(flash())
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true,
+    store: new MongoStore({
+        mongoUrl: db.client.s.url,
+        ttl: 14 * 24 * 60 * 60 // = 14 days. Default
+    })
 }))
+
+//console.log(db)
+//console.log(db.client)
+//console.log(db.client.s)
+//console.log(db.client.s.url)
 
 // Express Messages Middleware
 //app.use(require('connect-flash')());
