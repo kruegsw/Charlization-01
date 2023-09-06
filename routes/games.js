@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
 })
 
 router.get('/new', (req, res) => {
-    res.render('games/new.ejs', { username: req.session.passport.user })
+    res.render('games/new.ejs', { username: req.session.passport.user.username })
 })
 
 router.post('/new', async (req, res) => {
@@ -30,6 +30,11 @@ router.post('/new', async (req, res) => {
         console.log( "error: " + e )
         res.redirect('/games/new')
     }
+})
+
+router.get('/:id', async (req, res) => {
+    const game = await Game.findOne({ _id: req.params.id })
+    res.render("games/play.ejs", { username: req.session.passport.user.username, game: game })
 })
 
 module.exports = router

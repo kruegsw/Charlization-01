@@ -13,9 +13,10 @@
   <div class="jumbotron">
     <h1>My Games</h1>
     <ul>
+      <!-- bulleted list of links to users games -->
       <% games.forEach(function(game) { %>
         <li>
-          <strong><%= game.gameName %></strong>
+          <strong><a href=<%= `games/${game._id}` %>><%= game.gameName %></a></strong>
         </li>
       <% }); %>
     </ul>
