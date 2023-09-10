@@ -39,7 +39,7 @@ router.get('/:id', async (req, res) => {
     res.render("games/play.ejs", {
         username: req.session.passport.user.username,
         game: game,
-        //socketURL: process.env.SOCKET_IO_URL
+        socketURL: process.env.SOCKET_IO_URL
     })
 })
 

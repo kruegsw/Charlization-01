@@ -26,8 +26,15 @@
   crossorigin="anonymous">
 </script>
 
+<!-- workaround to pass server side EJS variable to client side JS variable -->
 <script>
-  const socket = io('http://charlization.com:3000');
+  var clientSocketURL = '<%- socketURL %>'; // test is now a valid js object
+  console.log(clientSocketURL)
+</script>
+<!-- end workaround -->
+
+<script>
+  const socket = io(`${clientSocketURL}`);
   console.log(socket)
 
   socket.on("connect", () => {
