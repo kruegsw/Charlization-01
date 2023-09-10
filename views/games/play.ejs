@@ -3,6 +3,7 @@
 <head>
   <%- include('../partials/head'); %>
 </head>
+
 <body class="container">
 
 <header>
@@ -19,5 +20,23 @@
   <%- include('../partials/footer'); %>
 </footer>
 
+<script
+  src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+  integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+  crossorigin="anonymous">
+</script>
+
+<script>
+  const socket = io('http://localhost:3000');
+  console.log(socket)
+
+  socket.on("connect", () => {
+  console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
+
+  socket.on("disconnect", () => {
+  console.log(socket.id); // undefined
+  });
+});
+</script>
 </body>
 </html>

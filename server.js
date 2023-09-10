@@ -117,6 +117,9 @@ app.use(passport.initialize())
 app.use(passport.session())
 //app.use(methodOverride('_method'))
 
+//const connections = require("./connections/socketio")
+//connections()
+
 app.get('/', checkAuthenticated, (req, res) => {
     console.log("app.get / middleware")
     console.log("req.user: " + JSON.stringify(req.user))
@@ -212,4 +215,53 @@ const gameRouter = require('./routes/games')
 app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
-app.listen(3000)
+
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, { /* options */ });
+
+io.on('connection', (socket) => {
+    console.log(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
+
+    socket.on('disconnect', () => {
+        console.log(`Client  ${socket.id} disconnected`);
+    });
+
+    socket.on('chat message', function(msg) {
+        console.log("Received a chat message");
+        io.emit('chat message', msg);
+    });
+    
+})
+
+httpServer.listen(3000);
+
+/*
+var httpServer = require('http').createServer(app);
+var io = require('socket.io')(httpServer);
+
+httpServer.listen(process.env.PORT || 3000, function() {
+    var host = httpServer.address().address
+    var port = httpServer.address().port
+    console.log('App listening at http://%s:%s', host, port)
+});
+
+io.on('connection', (socket) => {
+    console.log(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
+
+    socket.on('disconnect', () => {
+        console.log(`Client  ${socket.id} disconnected`);
+    });
+
+    socket.on('chat message', function(msg) {
+        console.log("Received a chat message");
+        io.emit('chat message', msg);
+    });
+    
+})
+
+//httpServer.listen(3000)
+*/
