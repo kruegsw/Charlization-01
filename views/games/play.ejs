@@ -27,7 +27,7 @@
 </script>
 
 <script>
-  const socket = io('http://localhost:3000');
+  const socket = io(process.env.SOCKET_IO_URL);
   console.log(socket)
 
   socket.on("connect", () => {
