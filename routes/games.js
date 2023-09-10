@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require("express")
 const router = express.Router()
 //const passport = require('passport')
@@ -34,7 +36,11 @@ router.post('/new', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
     const game = await Game.findOne({ _id: req.params.id })
-    res.render("games/play.ejs", { username: req.session.passport.user.username, game: game })
+    res.render("games/play.ejs", {
+        username: req.session.passport.user.username,
+        game: game,
+        socketURL: process.env.SOCKET_IO_URL
+    })
 })
 
 module.exports = router

@@ -27,7 +27,7 @@
 </script>
 
 <script>
-  const socket = io(process.env.SOCKET_IO_URL);
+  const socket = io('http://charlization.com:3000');
   console.log(socket)
 
   socket.on("connect", () => {
