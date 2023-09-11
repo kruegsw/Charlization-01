@@ -1,14 +1,17 @@
 require('dotenv').config()
 
 const express = require('express')
+const logger = require("./logger")
 
 const mongoose = require('mongoose')
 const User = require("./models/User")
 
-mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true })
+mongoose.connect(process.env.DATABASE_URL, {
+    useNewUrlParser: true
+})
 const db = mongoose.connection
-db.on('error', (error) => console.error(error))
-db.once('open', () => console.log('Connected to Database'))
+db.on('error', (error) => logger.error(error))
+db.once('open', () => logger.info('Connected to Database'))
 
 
 
@@ -54,7 +57,7 @@ async function run() {
         console.log(user)
     */
     } catch (e) {
-        console.log(e.message)
+        logger.error(e.message)
     }
 }
 
@@ -117,9 +120,9 @@ app.use(passport.session())
 //connections()
 
 app.get('/', checkAuthenticated, (req, res) => {
-    console.log("app.get / middleware")
-    console.log("req.user: " + JSON.stringify(req.user))
-    console.log("req.session.passport.user: " + req.session.passport.user )
+    logger.info("app.get / middleware")
+    logger.info("req.user: " + JSON.stringify(req.user))
+    logger.info("req.session.passport.user: " + req.session.passport.user )
     res.render('index.ejs', { username: req.session.passport.user.username })
     //console.log(req)
 })
@@ -129,44 +132,44 @@ app.get('/about', checkAuthenticated, (req, res) => {
 })
 
 app.get('/login', checkNotAuthenticated, (req, res) => {
-    console.log("app.get /login middleware")
+    logger.info("app.get /login middleware")
     res.render('login.ejs')
 })
 
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/login',
-    failureFlash: true
+    failureFlash: true // enables error text to appear where specified on ejs files (I am not sure how this works)
 }))
 
 app.get('/register', checkNotAuthenticated, (req, res) => {
-    console.log("app.get /register middleware")
+    logger.info("app.get /register middleware")
     res.render('register.ejs')
 })
 
 app.post('/register', checkNotAuthenticated, async (req, res) => {
-console.log("app.post /register middleware")
-try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    logger.info("app.post /register middleware")
+    try {
+        const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
-    const user = new User({ username: req.body.username, password: hashedPassword })
-    await user.save()
+        const user = new User({ username: req.body.username, password: hashedPassword })
+        await user.save()
 
-    /*
-    users.push({
-    id: Date.now().toString(),
-    username: req.body.username,
-    password: hashedPassword
-    })
-    console.log(users)
-    */
+        /*
+        users.push({
+        id: Date.now().toString(),
+        username: req.body.username,
+        password: hashedPassword
+        })
+        console.log(users)
+        */
 
 
-    res.redirect('/login')
-} catch (e) {
-    console.log( "error: " + e )
-    res.redirect('/register')
-}
+        res.redirect('/login')
+    } catch (e) {
+        logger.error( "error: " + e )
+        res.redirect('/register')
+    }
 })
 
 /*
@@ -180,7 +183,7 @@ res.redirect('/login')
 */
 
 app.post('/logout', function(req, res, next) {
-    console.log("app.post /logout middleware")
+    logger.info("app.post /logout middleware")
     req.logout(function(err) {
         if (err) { return next(err); }
         //req.flash('success', 'You are logged out');
@@ -189,8 +192,8 @@ app.post('/logout', function(req, res, next) {
 });
 
 function checkAuthenticated(req, res, next) {
-    console.log("checkAuthenticated middleware")
-    console.log(`req/isAuthenticated() is ${req.isAuthenticated()}`)
+    logger.info("checkAuthenticated middleware")
+    logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
     if (req.isAuthenticated()) {
         return next()
     }
@@ -199,7 +202,7 @@ function checkAuthenticated(req, res, next) {
 }
 
 function checkNotAuthenticated(req, res, next) {
-    console.log("checkNotAuthenticated middleware")
+    logger.info("checkNotAuthenticated middleware")
     if (req.isAuthenticated()) {
         return res.redirect('/')
     }
@@ -220,14 +223,14 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, { /* options */ });
 
 io.on('connection', (socket) => {
-    console.log(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
+    logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
     socket.on('disconnect', () => {
-        console.log(`Client  ${socket.id} disconnected`);
+        logger.info(`Client  ${socket.id} disconnected`);
     });
 
     socket.on('chat message', function(msg) {
-        console.log("Received a chat message");
+        logger.info("Received a chat message");
         io.emit('chat message', msg);
     });
     
