@@ -1,10 +1,12 @@
+// sensitive data
 require('dotenv').config()
-
-const express = require('express')
 const logger = require("./logger")
 
+//-----------------------------------------------------------------
+//----------------CONFIGURE AND INITIALIZE MONGODB.................
+//-----------------------------------------------------------------
+
 const mongoose = require('mongoose')
-const User = require("./models/User")
 
 mongoose.connect(process.env.DATABASE_URL, {
     useNewUrlParser: true
@@ -13,66 +15,23 @@ const db = mongoose.connection
 db.on('error', (error) => logger.error(error))
 db.once('open', () => logger.info('Connected to Database'))
 
+//-----------------------------------------------------------------
+//----------------INITIATE EXPRESS APP.............................
+//-----------------------------------------------------------------
 
-
-run()
-async function run() {
-    try {
-        //const user = await User.findById("64d2f0ee639bfd0b0a1527d5")
-        //const user = await User.find({ name: "Kyle" })
-        //const user = await User.findByName("Kyle")
-        //const user = await User.findOne({ username: "w" })
-        //console.log(user.username === "w")
-        //await user.save()
-        /*
-        const user = await User.where("age")
-            .gt(12)
-            .where("name")
-            .equals("Kyle")
-            .populate("bestFriend")
-            .limit(1)
-            //.select("age")
-        */
-
-        //user[0].bestFriend = "64d354f571c67ee0468646f6"
-        //await user[0].save()
-        //console.log(user)
-        //console.log(user.nameAge)
-        //user.sayHi()
-    /*
-        const user = await User.create({
-            name: "Kyle",
-            age: 26,
-            hobbies: ["Weight lifting", "Bowling"],
-            address: {
-                street: "Main St"
-            },
-            email: "test@test.com"
-        })
-        user.createdAt = 5
-        await user.save()
-        //const user = new User({ name: "Kyle", age: 26 })
-        //user.save().then(() => console.log("User Saved"))
-        //await user.save()
-        console.log(user)
-    */
-    } catch (e) {
-        logger.error(e.message)
-    }
-}
-
-
-//const routes = require("./routes")
-
-// Init App
+const express = require('express')
 const app = express()
 
-const bcrypt = require('bcrypt')
+//-----------------------------------------------------------------
+//----AUTHENTICATION AND SESSION...................................
+//-----------------------------------------------------------------
+
 const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
 //const methodOverride = require('method-override')
 const MongoStore = require('connect-mongo');
+const User = require("./models/User")
 
 app.use(express.static("public"))
 //app.use(express.urlencoded({ extended: true }))
@@ -85,10 +44,6 @@ initializePassport(
     (user, id) => user.id === id 
 )
 
-//app.set('views', path.join(__dirname, 'views'));
-app.set('view-engine', 'ejs')
-app.use(express.urlencoded({ extended: false }))
-//app.use("/", routes)
 app.use(flash())
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -116,8 +71,34 @@ app.use(passport.initialize())
 app.use(passport.session())
 //app.use(methodOverride('_method'))
 
-//const connections = require("./connections/socketio")
-//connections()
+// define authentication middleware
+function checkAuthenticated(req, res, next) {
+    logger.info("checkAuthenticated middleware")
+    logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
+    if (req.isAuthenticated()) {
+        return next()
+    }
+
+    res.redirect('/login')
+}
+
+function checkNotAuthenticated(req, res, next) {
+    logger.info("checkNotAuthenticated middleware")
+    if (req.isAuthenticated()) {
+        return res.redirect('/')
+    }
+    next()
+}
+
+//-----------------------------------------------------------------
+//------------------MAIN ROUTES....................................
+//-----------------------------------------------------------------
+
+
+//app.set('views', path.join(__dirname, 'views'));
+app.set('view-engine', 'ejs')
+app.use(express.urlencoded({ extended: false }))
+//app.use("/", routes)
 
 app.get('/', checkAuthenticated, (req, res) => {
     logger.info("app.get / middleware")
@@ -147,11 +128,15 @@ app.get('/register', checkNotAuthenticated, (req, res) => {
     res.render('register.ejs')
 })
 
+const bcrypt = require('bcrypt')
+
 app.post('/register', checkNotAuthenticated, async (req, res) => {
     logger.info("app.post /register middleware")
     try {
+        // a hashed version of the user provided password will be stored in the database
         const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
+        // 
         const user = new User({ username: req.body.username, password: hashedPassword })
         await user.save()
 
@@ -191,23 +176,9 @@ app.post('/logout', function(req, res, next) {
     });
 });
 
-function checkAuthenticated(req, res, next) {
-    logger.info("checkAuthenticated middleware")
-    logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
-    if (req.isAuthenticated()) {
-        return next()
-    }
-
-    res.redirect('/login')
-}
-
-function checkNotAuthenticated(req, res, next) {
-    logger.info("checkNotAuthenticated middleware")
-    if (req.isAuthenticated()) {
-        return res.redirect('/')
-    }
-    next()
-}
+//-----------------------------------------------------------------
+//---------------REGISTER ROUTERS..................................
+//-----------------------------------------------------------------
 
 const userRouter = require('./routes/users')
 const gameRouter = require('./routes/games')
@@ -215,12 +186,19 @@ app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
 
+//-----------------------------------------------------------------
+//------------------SOCKET.IO......................................
+//-----------------------------------------------------------------
+
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
+// wrap express app in http server, http server is required for websocket connection 
 const httpServer = createServer(app);
-
 const io = new Server(httpServer, { /* options */ });
+
+//const connections = require("./connections/socketio")
+//connections()
 
 io.on('connection', (socket) => {
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
@@ -236,6 +214,11 @@ io.on('connection', (socket) => {
     
 })
 
+//-----------------------------------------------------------------
+//------------------START SERVER...................................
+//-----------------------------------------------------------------
+
+// expressu app and socket io are listening to same port via httpServer
 httpServer.listen(3000);
 
 /*

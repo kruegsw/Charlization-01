@@ -14,9 +14,12 @@ async function initialize(passport, getUserByUsername, getUserById) {
     //console.log("user = " + user)
 
     try {
+      // hash of user provided password must match the stored hash of the password in the database
       if (await bcrypt.compare(password, user.password)) {
+        // if match return user
         return done(null, user)
       } else {
+        // if not match, don't return user, send error message (which will be displayed to user via flash)
         return done(null, false, { message: 'Password incorrect' })
       }
     } catch (e) {
