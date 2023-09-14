@@ -23,7 +23,7 @@ const express = require('express')
 const app = express()
 
 //-----------------------------------------------------------------
-//----AUTHENTICATION AND SESSION...................................
+//-------------AUTHENTICATION AND SESSION..........................
 //-----------------------------------------------------------------
 
 const passport = require('passport')
@@ -201,15 +201,16 @@ const io = new Server(httpServer, { /* options */ });
 //connections()
 
 io.on('connection', (socket) => {
+    
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
     socket.on('disconnect', () => {
         logger.info(`Client  ${socket.id} disconnected`);
     });
 
-    socket.on('chat message', function(msg) {
-        logger.info("Received a chat message");
-        io.emit('chat message', msg);
+    socket.on('send-message', message => {
+        logger.info(`Received a chat message from ${socket.id}:  ${message}`);
+        io.emit('receive-message', message, author = socket.id);
     });
     
 })
