@@ -54,20 +54,20 @@
   socket.on("connect", () => {
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
     
-    socket.emit('join-game', room = clientGameID, roomClients => {
+    socket.emit('join-game', room = clientGameID, /* roomClients => {
       //console.log("players are " + roomClients)
       ///////////////////////////////////////////////////// clean this up, move to separate event?
-      updatePlayerList(roomClients)
+      //updatePlayerList(roomClients)
       ///////////////////////////////////////////////////// clean this up, move to separate event?
       //console.log(playerArray)
-    })
+    }*/)
 
-    socket.on("disconnect", room = clientGameID, roomClients => {
+    socket.on("disconnect", room = clientGameID, /* roomClients => {
       //console.log(socket.id); // undefined
       ///////////////////////////////////////////////////// clean this up, move to separate event?
-      updatePlayerList(roomClients)
+      //updatePlayerList(roomClients)
       ///////////////////////////////////////////////////// clean this up, move to separate event?
-    });
+    }*/);
 
     socket.on('receive-message', (message, author) => {
       console.log(`received messaged from server: ${message}`)

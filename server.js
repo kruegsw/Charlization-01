@@ -210,10 +210,10 @@ io.on('connection', (socket) => {
         logger.info(`Client  ${socket.id} disconnected`);
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
-        let roomClientsSet = io.sockets.adapter.rooms.get(room)
-        let roomClients = Array.from(roomClientsSet).join(',')
-        cb(roomClients) // list of all clients connected to room
-        console.log(roomClients)
+        //let roomClientsSet = io.sockets.adapter.rooms.get(room)
+        //let roomClients = Array.from(roomClientsSet).join(',')
+        //cb(roomClients) // list of all clients connected to room
+        //console.log(roomClients)
         ///////////////////////////////////////////////////// clean this up, move to separate event?
     });
 
@@ -223,10 +223,10 @@ io.on('connection', (socket) => {
         logger.info(`Client ${socket.id} connected to the game ${room}`) // id randomly assigned to client
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
-        let roomClientsSet = io.sockets.adapter.rooms.get(room)
-        let roomClients = Array.from(roomClientsSet).join(',')
-        cb(roomClients) // list of all clients connected to room
-        console.log(roomClients)
+        //let roomClientsSet = io.sockets.adapter.rooms.get(room)
+        //let roomClients = Array.from(roomClientsSet).join(',')
+        //cb(roomClients) // list of all clients connected to room
+        //console.log(roomClients)
         ///////////////////////////////////////////////////// clean this up, move to separate event?
     })
 
