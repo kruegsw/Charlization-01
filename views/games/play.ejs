@@ -42,7 +42,7 @@
 <!-- end workaround -->
 
 <script>
-  const socket = io(`${clientSocketURL}`); // estavlish websocket connection
+  const socket = io(`${clientSocketURL}`, { allowWebSocket: true }); // establish websocket connection
   //console.log(socket)
 
   socket.on("connect", () => {
