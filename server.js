@@ -185,6 +185,8 @@ const gameRouter = require('./routes/games')
 app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
+// for testing of passing game state below...
+const Game = require("./models/Game")
 
 //-----------------------------------------------------------------
 //------------------SOCKET.IO......................................
@@ -206,7 +208,7 @@ io.on('connection', (socket) => {
     
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
-    socket.on('disconnect', (room, cb) => {
+    socket.on('disconnect', (room, callback) => {
         logger.info(`Client  ${socket.id} disconnected`);
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
@@ -217,9 +219,11 @@ io.on('connection', (socket) => {
         ///////////////////////////////////////////////////// clean this up, move to separate event?
     });
 
-    socket.on('join-game', (room, cb) => {
+    socket.on('join-game', async (room, callback) => {
         //logger.info("room is: " + room)
         socket.join(room)
+        const game = await Game.findOne({ _id: room })
+        callback(game.gameState)
         logger.info(`Client ${socket.id} connected to the game ${room}`) // id randomly assigned to client
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
@@ -231,46 +235,30 @@ io.on('connection', (socket) => {
     })
 
     socket.on('send-message', (message, room) => {
-        logger.info(`Received a chat message from ${socket.id} to room ${room}:  ${message}`);
+        logger.info(`Received a chat message from ${message.author} to room ${room}:  ${message.text}`);
+
         if (room === "") {
-            io.emit('receive-message', message, author = socket.id);
+            io.emit('receive-message', message)
         } else {
-            io.in(room).emit('receive-message', message, author = socket.id)
+            io.in(room).emit('receive-message', message)
+            updateGameState(gameId = room, message )
         }
     });
     
 })
 
 //-----------------------------------------------------------------
+//------------------Functions for Socket I... belong here?.........
+//-----------------------------------------------------------------
+
+async function updateGameState (gameId, message) {
+    const game = await Game.findOne({ _id: gameId })
+    game.gameState.push(message)
+    game.save()
+}
+
+//-----------------------------------------------------------------
 //------------------START SERVER...................................
 //-----------------------------------------------------------------
 
-// expressu app and socket io are listening to same port via httpServer
 httpServer.listen(3000);
-
-/*
-var httpServer = require('http').createServer(app);
-var io = require('socket.io')(httpServer);
-
-httpServer.listen(process.env.PORT || 3000, function() {
-    var host = httpServer.address().address
-    var port = httpServer.address().port
-    console.log('App listening at http://%s:%s', host, port)
-});
-
-io.on('connection', (socket) => {
-    console.log(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
-
-    socket.on('disconnect', () => {
-        console.log(`Client  ${socket.id} disconnected`);
-    });
-
-    socket.on('chat message', function(msg) {
-        console.log("Received a chat message");
-        io.emit('chat message', msg);
-    });
-    
-})
-
-//httpServer.listen(3000)
-*/

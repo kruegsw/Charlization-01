@@ -35,6 +35,18 @@ router.post('/new', async (req, res) => {
         res.redirect('/games/new')
     }
 })
+/*
+router.post('/:id/:gameState', async (req, res) => {
+    const game = await Game.findOne({ _id: req.params.id })
+    game.update({gameState:req.params.gameState}, function (err, result) {
+        if (err){
+            console.log(err)
+        }else{
+            console.log("Result :", result) 
+        }
+    });
+})
+*/
 
 router.get('/:id', async (req, res) => {
     const game = await Game.findOne({ _id: req.params.id })

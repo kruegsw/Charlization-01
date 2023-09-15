@@ -4,8 +4,9 @@ const mongoose = require('mongoose')
 const gameSchema = new mongoose.Schema({
     gameName: String,
     gameState: {
-        type: String,
-        default: () => "created"
+        type: Array,
+        author: String,
+        message: String,
     },
     createdBy: {
         type: mongoose.SchemaTypes.ObjectId,

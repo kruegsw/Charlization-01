@@ -18,7 +18,7 @@
     <h1><%= game.gameName %></h1>
   </div>
   <div>
-    <div id="chat-log" style="border: 1px solid"></div>
+    <div id="chat-log" tabindex="0" style="border: 1px solid; overflow-y: auto; max-height: 50vh;"></div>
     <label for="message-input">Message</label>
     <input type="text" id="message-input">
     <button id="send-button">Send</button>
@@ -41,11 +41,9 @@
 <script>
   var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
   var clientGameID = '<%- game._id %>'
+  var username = '<%- username %>'
   console.log(clientSocketURL)
-</script>
-<!-- end workaround -->
 
-<script>
   const socket = io(`${clientSocketURL}`, {'transports': ['websocket', 'polling']}); // establish websocket connection
   // trasports options must be specified for mobile browser, see:
   // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
@@ -54,13 +52,9 @@
   socket.on("connect", () => {
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
     
-    socket.emit('join-game', room = clientGameID, /* roomClients => {
-      //console.log("players are " + roomClients)
-      ///////////////////////////////////////////////////// clean this up, move to separate event?
-      //updatePlayerList(roomClients)
-      ///////////////////////////////////////////////////// clean this up, move to separate event?
-      //console.log(playerArray)
-    }*/)
+    socket.emit('join-game', room = clientGameID, gameState => {
+      console.log(gameState)
+    })
 
     socket.on("disconnect", room = clientGameID, /* roomClients => {
       //console.log(socket.id); // undefined
@@ -71,11 +65,13 @@
 
     socket.on('receive-message', (message, author) => {
       console.log(`received messaged from server: ${message}`)
-      updateChatLog(message, author)
+      addMessageToChatLog(message)
+    })
+
+    socket.on('receive-game-state', ganeState => {
+      
     })
   });
-</script>
-<script>
 
   const sendButton = document.getElementById("send-button")
   const messageInput = document.getElementById('message-input')
@@ -83,30 +79,37 @@
   const playerList = document.getElementById('player-list')
 
   sendButton.addEventListener('click', () => {
-    const message = messageInput.value
+    const message = { author: username, text: messageInput.value }
     socket.emit('send-message', message, room = clientGameID)
     messageInput.value = ""
   })
 
   messageInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
-      const message = messageInput.value
+      const message = { author: username, text: messageInput.value }
       socket.emit('send-message', message, room = clientGameID)
       messageInput.value = ""
     }
   });
 
-</script>
-<script>
-  function updateChatLog(message, author) {
+  function addMessageToChatLog(message) {
     let div = document.createElement("div")
-    div.textContent = `${author}:  ${message}`
+    div.textContent = `${message.author}:  ${message.text}`
     document.getElementById('chat-log').append(div)
+  }
+
+  function addAllMessagesToChatLog(allMessages) {
+    allMessages.forEach(function(message) {
+            `<div>${`${message.author}:  ${message.text}`}</div>`
+          })
   }
 
   function updatePlayerList(players) {
     playerList.textContent = `Currently in game:  ${players}`
   }
+
 </script>
+
 </body>
+
 </html>
