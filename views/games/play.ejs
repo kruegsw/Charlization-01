@@ -42,7 +42,8 @@
 <!-- end workaround -->
 
 <script>
-  const socket = io(`${clientSocketURL}`, { allowWebSocket: true }); // establish websocket connection
+  const socket = io(`${clientSocketURL}`, {'transports': ['websocket', 'polling']}); // establish websocket connection
+  // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
   //console.log(socket)
 
   socket.on("connect", () => {

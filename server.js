@@ -195,7 +195,7 @@ const { Server } = require("socket.io");
 
 // wrap express app in http server, http server is required for websocket connection 
 const httpServer = createServer(app);
-const io = new Server(httpServer, { /* options */ });
+const io = new Server(httpServer, {'transports': ['websocket', 'polling']}); // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
 
 //const connections = require("./connections/socketio")
 //connections()
