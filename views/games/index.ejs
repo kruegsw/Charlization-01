@@ -10,16 +10,31 @@
 </header>
 
 <main>
-  <div class="jumbotron">
-    <h1>My Games</h1>
-    <ul>
-      <!-- bulleted list of links to users games -->
-      <% games.forEach(function(game) { %>
-        <li>
-          <strong><a href=<%= `games/${game._id}` %>><%= game.gameName %></a></strong>
-        </li>
-      <% }); %>
-    </ul>
+  <div class="row">
+    <div class="col-sm-8">
+      <div class="jumbotron">
+        <h1>My Games</h1>
+        <ul>
+          <!-- bulleted list of links to users games -->
+          <% games.forEach(function(game) { %>
+            <li>
+              <strong><a href=<%= `games/${game._id}` %>><%= game.gameName %></a></strong>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <h1>All Games</h1>
+      <ul>
+        <!-- bulleted list of links to all games -->
+        <% allGames.forEach(function(game) { %>
+          <li>
+            <strong><a href=<%= `games/${game._id}` %>><%= game.gameName %></a></strong>
+          </li>
+        <% }); %>
+        </ul>
+    </div>
   </div>
   <a href="/games/new">Create New Game</a>
 </main>

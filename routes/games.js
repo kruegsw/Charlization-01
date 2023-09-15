@@ -11,10 +11,11 @@ router.get("/", async (req, res) => {
     //const user = await User.findById(req.session.passport.user)
     //const games = await Game.find({ createdBy: user._id })
     const games = await Game.find({ createdBy: req.session.passport.user })
+    const allGames = await Game.find()
     //console.log(user)
     //console.log(user._id)
     //console.log(games)
-    res.render("games/index.ejs", { username: req.session.passport.user.username, games: games })
+    res.render("games/index.ejs", { username: req.session.passport.user.username, games: games, allGames: allGames })
     //res.render("games/index.ejs", { username: JSON.stringify(user) })
 })
 

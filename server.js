@@ -195,7 +195,9 @@ const { Server } = require("socket.io");
 
 // wrap express app in http server, http server is required for websocket connection 
 const httpServer = createServer(app);
-const io = new Server(httpServer, {'transports': ['websocket', 'polling']}); // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
+const io = new Server(httpServer, {'transports': ['websocket', 'polling']});
+ // trasports options must be specified for mobile browser, see:
+// https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
 
 //const connections = require("./connections/socketio")
 //connections()
@@ -204,13 +206,37 @@ io.on('connection', (socket) => {
     
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', (room, cb) => {
         logger.info(`Client  ${socket.id} disconnected`);
+
+        ///////////////////////////////////////////////////// clean this up, move to separate event?
+        let roomClientsSet = io.sockets.adapter.rooms.get(room)
+        let roomClients = Array.from(roomClientsSet).join(',')
+        cb(roomClients) // list of all clients connected to room
+        console.log(roomClients)
+        ///////////////////////////////////////////////////// clean this up, move to separate event?
     });
 
-    socket.on('send-message', message => {
-        logger.info(`Received a chat message from ${socket.id}:  ${message}`);
-        io.emit('receive-message', message, author = socket.id);
+    socket.on('join-game', (room, cb) => {
+        //logger.info("room is: " + room)
+        socket.join(room)
+        logger.info(`Client ${socket.id} connected to the game ${room}`) // id randomly assigned to client
+
+        ///////////////////////////////////////////////////// clean this up, move to separate event?
+        let roomClientsSet = io.sockets.adapter.rooms.get(room)
+        let roomClients = Array.from(roomClientsSet).join(',')
+        cb(roomClients) // list of all clients connected to room
+        console.log(roomClients)
+        ///////////////////////////////////////////////////// clean this up, move to separate event?
+    })
+
+    socket.on('send-message', (message, room) => {
+        logger.info(`Received a chat message from ${socket.id} to room ${room}:  ${message}`);
+        if (room === "") {
+            io.emit('receive-message', message, author = socket.id);
+        } else {
+            io.in(room).emit('receive-message', message, author = socket.id)
+        }
     });
     
 })
