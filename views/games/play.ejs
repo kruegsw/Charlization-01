@@ -42,10 +42,10 @@
   var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
   var clientGameID = '<%- game._id %>'
   var username = '<%- username %>'
-  console.log(clientSocketURL)
+  //console.log(clientSocketURL)
 
-  const socket = io(`${clientSocketURL}`, {'transports': ['websocket', 'polling']}); // establish websocket connection
-  // trasports options must be specified for mobile browser, see:
+  const socket = io(`${clientSocketURL}`, {'transports': ['websocket', 'polling']});
+  // trasports options must be specified for mobile browser client, see:
   // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
   //console.log(socket)
 
@@ -58,27 +58,18 @@
       })
     })
 
-    socket.on("disconnect", room = clientGameID, /* roomClients => {
-      //console.log(socket.id); // undefined
-      ///////////////////////////////////////////////////// clean this up, move to separate event?
-      //updatePlayerList(roomClients)
-      ///////////////////////////////////////////////////// clean this up, move to separate event?
-    }*/);
+    socket.on("disconnect", room = clientGameID)
 
-    socket.on('receive-message', (message, author) => {
+    socket.on('receive-message', message => {
       console.log(`received messaged from server: ${message}`)
       addMessageToChatLog(message)
     })
 
-    socket.on('receive-game-state', ganeState => {
-      
-    })
   });
 
   const sendButton = document.getElementById("send-button")
   const messageInput = document.getElementById('message-input')
   const chatLog = document.getElementById('chat-log')
-  const playerList = document.getElementById('player-list')
 
   sendButton.addEventListener('click', () => {
     const message = { author: username, text: messageInput.value }
@@ -96,18 +87,8 @@
 
   function addMessageToChatLog(message) {
     let div = document.createElement("div")
-    div.textContent = `${message.author}:  ${message.text}`
+    div.innerHTML = `<b>${message.author}:</b>  ${message.text}`
     document.getElementById('chat-log').append(div)
-  }
-
-  function addAllMessagesToChatLog(allMessages) {
-    allMessages.forEach(function(message) {
-            `<div>${`${message.author}:  ${message.text}`}</div>`
-          })
-  }
-
-  function updatePlayerList(players) {
-    playerList.textContent = `Currently in game:  ${players}`
   }
 
 </script>

@@ -197,7 +197,7 @@ const { Server } = require("socket.io");
 
 // wrap express app in http server, http server is required for websocket connection 
 const httpServer = createServer(app);
-const io = new Server(httpServer, {'transports': ['websocket', 'polling']});
+const io = new Server(httpServer, { /* options */ });
  // trasports options must be specified for mobile browser, see:
 // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
 
@@ -208,15 +208,8 @@ io.on('connection', (socket) => {
     
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
-    socket.on('disconnect', (room, callback) => {
+    socket.on('disconnect', () => {
         logger.info(`Client  ${socket.id} disconnected`);
-
-        ///////////////////////////////////////////////////// clean this up, move to separate event?
-        //let roomClientsSet = io.sockets.adapter.rooms.get(room)
-        //let roomClients = Array.from(roomClientsSet).join(',')
-        //cb(roomClients) // list of all clients connected to room
-        //console.log(roomClients)
-        ///////////////////////////////////////////////////// clean this up, move to separate event?
     });
 
     socket.on('join-game', async (room, callback) => {
@@ -224,7 +217,7 @@ io.on('connection', (socket) => {
         socket.join(room)
         const game = await Game.findOne({ _id: room })
         callback(game.gameState)
-        logger.info(`Client ${socket.id} connected to the game ${room}`) // id randomly assigned to client
+        logger.info(`Client ${socket.id} connected to the game ${room} at ${Date(Date.now())}`) // id randomly assigned to client
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
         //let roomClientsSet = io.sockets.adapter.rooms.get(room)
