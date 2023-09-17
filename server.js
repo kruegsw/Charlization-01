@@ -204,6 +204,17 @@ const io = new Server(httpServer, { /* options */ });
 //const connections = require("./connections/socketio")
 //connections()
 
+io.use( (socket, next) => {
+    console.log(socket)
+    if (socket.handshake.auth.token) {
+        socket.username =  socket.handshake.auth.token //getUsernameFromToken(socket.handshake.auth.token)
+        next()
+    } else {
+        //next()
+        next(new Error("Please send token"))
+    }
+})
+
 io.on('connection', (socket) => {
     
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
