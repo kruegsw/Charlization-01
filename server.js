@@ -45,7 +45,8 @@ initializePassport(
 )
 
 app.use(flash())
-app.use(session({
+
+const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
@@ -53,7 +54,9 @@ app.use(session({
         mongoUrl: db.client.s.url,
         ttl: 14 * 24 * 60 * 60 // = 14 days. Default
     })
-}))
+})
+
+app.use(sessionMiddleware)
 
 //console.log(db)
 //console.log(db.client)
@@ -192,6 +195,9 @@ const Game = require("./models/Game")
 //------------------SOCKET.IO......................................
 //-----------------------------------------------------------------
 
+// for handing sessionID from express app to socket
+// https://www.danielbaulig.de/socket-ioexpress/index.html
+
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
@@ -204,8 +210,13 @@ const io = new Server(httpServer, { /* options */ });
 //const connections = require("./connections/socketio")
 //connections()
 
+io.engine.use(sessionMiddleware);
+
+
+/*
+
 io.use( (socket, next) => {
-    console.log(socket)
+    //console.log(socket)
     if (socket.handshake.auth.token) {
         socket.username =  socket.handshake.auth.token //getUsernameFromToken(socket.handshake.auth.token)
         next()
@@ -215,7 +226,40 @@ io.use( (socket, next) => {
     }
 })
 
+*/
+
 io.on('connection', (socket) => {
+
+    // https://socket.io/how-to/use-with-express-session
+    // I believe this is reloading the sessionMiddleWare i.e. io.engine.use(sessionMiddleware);
+    socket.use((__, next) => {
+        socket.request.session.reload((err) => {
+        if (err) {
+          socket.disconnect();
+        } else {
+          next();
+        }
+      });
+    });
+
+    // use the session ID to make the link between Express and Socket.IO
+    const session = socket.request.session
+    const user = session.passport.user
+
+    // the session ID is used as a room
+    socket.join(session.id);
+
+    io.engine.use((req, res, next) => {
+        //console.log(`req is ${JSON.stringify(req.rawHeaders, null, 4)}`)
+        //console.log(`req.sessionID = ${req.sessionID}`)
+        //console.log(`socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
+        //console.log(`socket.request.session.id is ${JSON.stringify(socket.request.session.id, null, 4)}`)
+        //console.log(`session.passport.username is ${session.passport.user.username}`)
+        //console.log(`socket.request === req is ${socket.request === req}`)
+        //console.log(`socket.request is ${JSON.stringify(socket.request, null, 4)}`)
+        //console.log(`socket.request is ${JSON.stringify(socket.request, null, 4)}`)
+        next();
+    });
     
     logger.info(`Client ${socket.id} connected to the WebSocket`); // id randomly assigned to client
 
@@ -228,7 +272,7 @@ io.on('connection', (socket) => {
         socket.join(room)
         const game = await Game.findOne({ _id: room })
         callback(game.gameState)
-        logger.info(`Client ${socket.id} connected to the game ${room} at ${Date(Date.now())}`) // id randomly assigned to client
+        logger.info(`Client (username: ${user.username}, socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
 
         ///////////////////////////////////////////////////// clean this up, move to separate event?
         //let roomClientsSet = io.sockets.adapter.rooms.get(room)
@@ -239,13 +283,14 @@ io.on('connection', (socket) => {
     })
 
     socket.on('send-message', (message, room) => {
-        logger.info(`Received a chat message from ${message.author} to room ${room}:  ${message.text}`);
+        //console.log(`the message is ${JSON.stringify(message, null, 4)}`)
+        logger.info(`Received a chat message from ${user.username} to room ${room}:  ${message}`);
 
         if (room === "") {
-            io.emit('receive-message', message)
+            io.emit('receive-message', {author: user.username, text: message} )
         } else {
-            io.in(room).emit('receive-message', message)
-            updateGameState(gameId = room, message )
+            io.in(room).emit('receive-message', {author: user.username, text: message} )
+            updateGameState(gameId = room, {author: user.username, text: message} )
         }
     });
     

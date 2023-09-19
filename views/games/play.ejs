@@ -41,7 +41,6 @@
 <script>
   var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
   var clientGameID = '<%- game._id %>'
-  var username = '<%- username %>'
   //console.log(clientSocketURL)
 
   const socket = io(`${clientSocketURL}`,
@@ -57,7 +56,7 @@
   socket.on("connect", () => {
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
     
-    socket.emit('join-game', room = clientGameID, gameState => {
+  socket.emit('join-game', room = clientGameID, gameState => {
       gameState.forEach( message => {
         addMessageToChatLog(message)
       })
@@ -81,14 +80,14 @@
   const chatLog = document.getElementById('chat-log')
 
   sendButton.addEventListener('click', () => {
-    const message = { author: username, text: messageInput.value }
+    const message = messageInput.value
     socket.emit('send-message', message, room = clientGameID)
     messageInput.value = ""
   })
 
   messageInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
-      const message = { author: username, text: messageInput.value }
+      const message = messageInput.value
       socket.emit('send-message', message, room = clientGameID)
       messageInput.value = ""
     }
