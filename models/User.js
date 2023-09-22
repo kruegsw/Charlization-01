@@ -52,13 +52,13 @@ userSchema.virtual('nameAge').get(function() {
 
 userSchema.pre('save', function(next) {
     this.updatedAt = Date.now()
-    console.log("mongoose pre middle ware ran")
+    //console.log("mongoose pre middle ware ran")
     next()
 })
 
 userSchema.post('save', function(doc, next) {
     //doc.sayHi(),
-    console.log("mongoose post middle ware ran")
+    //console.log("mongoose post middle ware ran")
     next()
 })
 

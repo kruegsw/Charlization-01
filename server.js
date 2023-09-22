@@ -12,6 +12,7 @@ const MongoStore = require('connect-mongo');
 const logger = require("./logger")
 const User = require("./models/User")
 const initializePassport = require('./passport-config')
+const authRouter = require('./routes/auth')
 const mainRouter = require('./routes/main')
 const userRouter = require('./routes/users') // not currently used for anything
 const gameRouter = require('./routes/games')
@@ -33,13 +34,14 @@ const sessionMiddleware = session({
 const app = express()
 app.set('view-engine', 'ejs')
 app.use(sessionMiddleware)
-initializePassport(passport, username => User.findOne({ username: username }), (user, id) => user.id === id )
+initializePassport(passport, user => User.findOne({ username: user }), (user, id) => user.id === id )
 app.use(passport.initialize())
 app.use(passport.session())
 app.use(flash())
 //app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: false }))
-app.use('/', mainRouter)
+app.use('/auth', checkNotAuthenticated, authRouter)
+app.use('/', checkAuthenticated, mainRouter)
 app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
@@ -52,12 +54,20 @@ io.engine.use(sessionMiddleware);
 
 function checkAuthenticated(req, res, next) {
     logger.info("checkAuthenticated middleware")
-    logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
+    //logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
     if (req.isAuthenticated()) {
         return next()
     }
 
-    res.redirect('/login')
+    res.redirect('/auth/login')
+}
+
+function checkNotAuthenticated(req, res, next) {
+    logger.info("checkNotAuthenticated middleware")
+    if (req.isAuthenticated()) {
+        return res.redirect('/')
+    }
+    next()
 }
 
 httpServer.listen(3000);

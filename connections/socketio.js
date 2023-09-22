@@ -46,7 +46,7 @@ function initialize (io) {
             socket.join(room)
             const game = await Game.findOne({ _id: room })
             callback(game.gameState)
-            logger.info(`Client (username: ${user.username}, socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
+            logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
     
             ///////////////////////////////////////////////////// clean this up, move to separate event?
             //let roomClientsSet = io.sockets.adapter.rooms.get(room)
@@ -58,13 +58,13 @@ function initialize (io) {
     
         socket.on('send-message', (message, room) => {
             //console.log(`the message is ${JSON.stringify(message, null, 4)}`)
-            logger.info(`Received a chat message from ${user.username} to room ${room}:  ${message}`);
+            logger.info(`Received a chat message from ${user} to room ${room}:  ${message}`);
     
             if (room === "") {
-                io.emit('receive-message', {author: user.username, text: message} )
+                io.emit('receive-message', {author: user, text: message} )
             } else {
-                io.in(room).emit('receive-message', {author: user.username, text: message} )
-                updateGameState(gameId = room, {author: user.username, text: message} )
+                io.in(room).emit('receive-message', {author: user, text: message} )
+                updateGameState(gameId = room, {author: user, text: message} )
             }
         });
         

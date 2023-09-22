@@ -7,7 +7,7 @@ const User = require("../models/User")
 router.get('/', checkAuthenticated, (req, res) => {
     logger.info("router.get / middleware")
     //res.send("User List")
-    res.render('index.ejs', { username: req.user.username })
+    res.render('index.ejs', { username: req.user })
 })
 
 function checkAuthenticated(req, res, next) {

@@ -17,7 +17,7 @@ async function initialize(passport, getUserByUsername, getUserById) {
       // hash of user provided password must match the stored hash of the password in the database
       if (await bcrypt.compare(password, user.password)) {
         // if match return user
-        return done(null, user)
+        return done(null, user.username) // this determine what will be saved in the session, in this case the username rather than the whole user object
       } else {
         // if not match, don't return user, send error message (which will be displayed to user via flash)
         return done(null, false, { message: 'Password incorrect' })

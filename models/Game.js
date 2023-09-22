@@ -8,10 +8,10 @@ const gameSchema = new mongoose.Schema({
         author: String,
         message: String,
     },
-    createdBy: {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: "User" // reference to user model
-    },
+    createdBy: String, //{
+        //type: mongoose.SchemaTypes.ObjectId,
+        //ref: "User" // reference to user model
+    //},
     players: String,
     createdAt: {
         type: Date,
@@ -27,12 +27,12 @@ const gameSchema = new mongoose.Schema({
 
 gameSchema.pre('save', function(next) {
     this.updatedAt = Date.now()
-    console.log("gameSchema pre middle ware ran")
+    //console.log("gameSchema pre middle ware ran")
     next()
 })
 
 gameSchema.post('save', function(doc, next) {
-    console.log("gameSchema post middle ware ran")
+    //console.log("gameSchema post middle ware ran")
     next()
 })
 
