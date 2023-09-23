@@ -7,7 +7,7 @@ function initialize (io) {
         // https://socket.io/how-to/use-with-express-session
         // I believe this is reloading the sessionMiddleWare i.e. io.engine.use(sessionMiddleware);
         // in the context of modifying the session
-        /*
+
         socket.use((__, next) => {
             socket.request.session.reload((err) => {
             if (err) {
@@ -17,7 +17,6 @@ function initialize (io) {
             }
           });
         });
-        */
     
         // use the session ID to make the link between Express and Socket.IO
         const session = socket.request.session
@@ -28,7 +27,7 @@ function initialize (io) {
         try {
             user = session.passport.user
           } catch (error) {
-            user = "session.passport.user not defined said: "
+            user = "socket.request.session.passport not defined said: "
           }
     
         // the session ID is used as a room
