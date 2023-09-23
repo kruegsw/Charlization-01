@@ -22,8 +22,7 @@ function initialize (io) {
         // use the session ID to make the link between Express and Socket.IO
         const session = socket.request.session
         logger.info(`socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
-        //const user = session.passport.user
-        const user = "test user name"
+        const user = session.passport.user || "session.passport.user not defined said: "
     
         // the session ID is used as a room
         socket.join(session.id);
