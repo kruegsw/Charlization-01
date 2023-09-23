@@ -54,6 +54,8 @@
   //console.log(socket)
 
   socket.on("connect", () => {
+
+    addMessageToChatLog(`Client ${socket.id} connected to the WebSocket`)
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
     
     socket.emit('join-game', room = clientGameID, gameState => {
