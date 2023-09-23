@@ -46,11 +46,13 @@ app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
 const httpServer = createServer(app);
-const io = new Server(httpServer, {'transports': ['websocket', 'polling']}); // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
+const io = new Server(httpServer, { /* options */ });
+//const io = new Server(httpServer, {'transports': ['websocket', 'polling']}); // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
+
+io.engine.use(sessionMiddleware);
 
 const initializeSocketIO = require("./connections/socketio")
 initializeSocketIO(io)
-io.engine.use(sessionMiddleware);
 
 function checkAuthenticated(req, res, next) {
     logger.info("checkAuthenticated middleware")
