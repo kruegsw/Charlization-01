@@ -7,6 +7,7 @@ router.get('/', (req, res) => {
     //logger.info("app.get / middleware")
     //logger.info("req.user: " + JSON.stringify(req.user))
     logger.info("req.session.passport.user: " + req.session.passport.user )
+    logger.info(`req.session: ${JSON.stringify(req.session, null, 4)}`)
     res.render('index.ejs', { username: req.session.passport.user })
     //console.log(req)
 })
