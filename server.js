@@ -48,10 +48,9 @@ app.use('/games', checkAuthenticated, gameRouter)
 const httpServer = createServer(app);
 const io = new Server(httpServer, { /* options */ });
 
-io.engine.use(sessionMiddleware);
-
 const initializeSocketIO = require("./connections/socketio")
 initializeSocketIO(io)
+io.engine.use(sessionMiddleware);
 
 function checkAuthenticated(req, res, next) {
     logger.info("checkAuthenticated middleware")
