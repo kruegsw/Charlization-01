@@ -44,7 +44,7 @@
   //console.log(clientSocketURL)
 
   const socket = io(`${clientSocketURL}`,
-    {transports: ['websocket', 'polling'],
+    {transports: ['websocket', 'polling'], // Default value: ["polling", "websocket", "webtransport"]
     auth: {
       token: "this is a token"
     }}
