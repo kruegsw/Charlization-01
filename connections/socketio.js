@@ -11,7 +11,8 @@ function initialize (io) {
         socket.use((__, next) => {
             socket.request.session.reload((err) => {
             if (err) {
-              socket.disconnect();
+                logger.error("socket.request.session.reload error " + err)
+                socket.disconnect();
             } else {
               next();
             }
