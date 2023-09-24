@@ -8,9 +8,6 @@ function initialize (io) {
         // I believe this is reloading the sessionMiddleWare i.e. io.engine.use(sessionMiddleware);
         // in the context of modifying the session
 
-        logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to socket at ${Date(Date.now())}.  socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
-
-
         socket.use((__, next) => {
             socket.request.session.reload((err) => {
             if (err) {
@@ -32,7 +29,9 @@ function initialize (io) {
           } catch (error) {
             user = "socket.request.session.passport not defined said: "
           }
-    
+        
+        logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to socket at ${Date(Date.now())}.  socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
+
         // the session ID is used as a room
         socket.join(session.id);
     
