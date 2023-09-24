@@ -41,6 +41,7 @@
 <script>
   var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
   var clientGameID = '<%- game._id %>'
+  var username = '<%- username %>'
   //console.log(clientSocketURL)
 
   const socket = io(`${clientSocketURL}`,
@@ -82,14 +83,14 @@
   const chatLog = document.getElementById('chat-log')
 
   sendButton.addEventListener('click', () => {
-    const message = messageInput.value
+    const message = {author: username, text: messageInput.value}
     socket.emit('send-message', message, room = clientGameID)
     messageInput.value = ""
   })
 
   messageInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
-      const message = messageInput.value
+      const message = {author: username, text: messageInput.value}
       socket.emit('send-message', message, room = clientGameID)
       messageInput.value = ""
     }

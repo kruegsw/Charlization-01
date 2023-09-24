@@ -20,9 +20,10 @@ function initialize (io) {
         });
     
         // use the session ID to make the link between Express and Socket.IO
-        const session = socket.request.session
+        //const session = socket.request.session
 
         //workaround for safari browser where session.passport is not defined
+        /*
         let user = ""
         try {
             user = session.passport.user
@@ -31,9 +32,10 @@ function initialize (io) {
           }
         
         logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to socket at ${Date(Date.now())}.  socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
+        */
 
         // the session ID is used as a room
-        socket.join(session.id);
+        //socket.join(session.id);
     
         io.engine.use((req, res, next) => {
             //console.log(`req is ${JSON.stringify(req.rawHeaders, null, 4)}`)
@@ -58,11 +60,11 @@ function initialize (io) {
             socket.join(room)
             const game = await Game.findOne({ _id: room })
             callback(game.gameState)
-            logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
+            logger.info(`Client (username: socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
             
-            const joinedMessage = `${user} joined chat at ${Date(Date.now())}`
-            io.in(room).emit('receive-message', {author: user, text: joinedMessage} )
-            updateGameState(gameId = room, {author: user, text: joinedMessage} )
+            //const joinedMessage = `${user} joined chat at ${Date(Date.now())}`
+            //io.in(room).emit('receive-message', {author: user, text: joinedMessage} )
+            //updateGameState(gameId = room, {author: user, text: joinedMessage} )
 
             ///////////////////////////////////////////////////// clean this up, move to separate event?
             //let roomClientsSet = io.sockets.adapter.rooms.get(room)
@@ -74,13 +76,13 @@ function initialize (io) {
     
         socket.on('send-message', (message, room) => {
             //console.log(`the message is ${JSON.stringify(message, null, 4)}`)
-            logger.info(`Received a chat message from ${user} to room ${room}:  ${message}`);
-    
+            logger.info(`Received a chat message from ${message.author} to room ${room}:  ${message.text}`);
+            
             if (room === "") {
-                io.emit('receive-message', {author: user, text: message} )
+                io.emit('receive-message', message )
             } else {
-                io.in(room).emit('receive-message', {author: user, text: message} )
-                updateGameState(gameId = room, {author: user, text: message} )
+                io.in(room).emit('receive-message', message )
+                updateGameState(gameId = room, message )
             }
         });
         
@@ -88,7 +90,7 @@ function initialize (io) {
     
     async function updateGameState (gameId, message) {
         const game = await Game.findOne({ _id: gameId })
-        game.gameState.push(message)
+        game.gameState.push({author: message.author, text: message.text})
         game.save()
     }
 }

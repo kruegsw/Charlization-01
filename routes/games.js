@@ -57,7 +57,7 @@ router.get('/:id', async (req, res) => {
     const game = await Game.findOne({ _id: req.params.id })
     logger.info(`${req.session.passport.user} has entered game ${req.params.id}, the req.session is: ${JSON.stringify(req.session, null, 4)}`)
     res.render("games/play.ejs", {
-        //username: req.session.passport.user,
+        username: req.session.passport.user,
         game: game,
         socketURL: process.env.SOCKET_IO_URL
     })
