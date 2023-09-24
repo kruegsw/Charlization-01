@@ -8,6 +8,9 @@ function initialize (io) {
         // I believe this is reloading the sessionMiddleWare i.e. io.engine.use(sessionMiddleware);
         // in the context of modifying the session
 
+        logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to socket at ${Date(Date.now())}.  socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
+
+
         socket.use((__, next) => {
             socket.request.session.reload((err) => {
             if (err) {
@@ -21,7 +24,6 @@ function initialize (io) {
     
         // use the session ID to make the link between Express and Socket.IO
         const session = socket.request.session
-        logger.info(`socket.request.session is ${JSON.stringify(socket.request.session, null, 4)}`)
 
         //workaround for safari browser where session.passport is not defined
         let user = ""
