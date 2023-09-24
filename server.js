@@ -52,7 +52,7 @@ const io = new Server(httpServer, { /* options */ });
 
 const initializeSocketIO = require("./connections/socketio")
 initializeSocketIO(io)
-io.engine.use(sessionMiddleware);
+//io.engine.use(sessionMiddleware);
 
 function checkAuthenticated(req, res, next) {
     //logger.info("checkAuthenticated middleware")

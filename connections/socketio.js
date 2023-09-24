@@ -8,6 +8,7 @@ function initialize (io) {
         // I believe this is reloading the sessionMiddleWare i.e. io.engine.use(sessionMiddleware);
         // in the context of modifying the session
 
+        /*
         socket.use((__, next) => {
             socket.request.session.reload((err) => {
             if (err) {
@@ -18,6 +19,7 @@ function initialize (io) {
             }
           });
         });
+        */
     
         // use the session ID to make the link between Express and Socket.IO
         //const session = socket.request.session
