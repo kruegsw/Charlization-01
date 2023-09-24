@@ -61,7 +61,7 @@ function initialize (io) {
             //logger.info("room is: " + room)
             socket.join(room)
             const game = await Game.findOne({ _id: room })
-            callback(game.gameState)
+            callback(game)
             logger.info(`Client (username: socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
             
             //const joinedMessage = `${user} joined chat at ${Date(Date.now())}`
@@ -78,9 +78,9 @@ function initialize (io) {
     
         socket.on('send-message', (message, room) => {
             //console.log(`the message is ${JSON.stringify(message, null, 4)}`)
-            logger.info(`Received a chat message from ${message.author} to room ${room}:  ${message.text}`);
+            //logger.info(`Received a chat message from ${message.author} to room ${room}:  ${message.text}`);
             
-            if (room === "") {
+            if (room === "" && message.type == "chat") {
                 io.emit('receive-message', message )
             } else {
                 io.in(room).emit('receive-message', message )
@@ -92,7 +92,12 @@ function initialize (io) {
     
     async function updateGameState (gameId, message) {
         const game = await Game.findOne({ _id: gameId })
-        game.gameState.push({author: message.author, text: message.text})
+        if (message.type == "chat") { game.chatLog.push({author: message.author, text: message.text}) }
+        if (message.type == "move") { game.gameState = message.gameState }
+        if (message.type == "addPlayer") { game.players.push(message.player) }
+        if (message.type == "removePlayer") {
+            if (game.players[1] == message.player) { game.players.pop() } else { game.players.shift() }
+        }
         game.save()
     }
 }

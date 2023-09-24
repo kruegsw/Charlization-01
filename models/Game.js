@@ -5,6 +5,10 @@ const gameSchema = new mongoose.Schema({
     gameName: String,
     gameState: {
         type: Array,
+        default: Array.from({ length: 3 }, () => Array(3).fill(''))
+    },
+    chatLog: {
+        type: Array,
         author: String,
         message: String,
     },
@@ -12,7 +16,10 @@ const gameSchema = new mongoose.Schema({
         //type: mongoose.SchemaTypes.ObjectId,
         //ref: "User" // reference to user model
     //},
-    players: String,
+    players: {
+        type: Array,
+        max: 2,
+    },
     createdAt: {
         type: Date,
         immutable: true,

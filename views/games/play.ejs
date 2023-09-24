@@ -17,6 +17,125 @@
   <div class="jumbotron">
     <h1><%= game.gameName %></h1>
   </div>
+
+  <!-------------------------------------------------->
+  <!-- tic-tac-toe from chatgpt for testing-->
+  <!-------------------------------------------------->
+  
+  <row>
+    <canvas id="game-board" width="300" height="300"></canvas>
+    <button id="leave-or-join-game" onclick=updateLeaveOrJoinGameButton()>Leave Game</button>
+    <div id="player-list"></div>
+  </row>
+
+  <script>
+      const canvas = document.getElementById('game-board');
+      const ctx = canvas.getContext('2d');
+
+      const cellSize = 100;
+      const boardSize = 3;
+      let board = Array.from({ length: boardSize }, () => Array(boardSize).fill(''));
+      let players = []
+      let currentPlayer
+      let gameOver = false;
+
+      canvas.addEventListener('click', (event) => {
+          if (gameOver) return;
+
+          const rect = canvas.getBoundingClientRect();
+          const x = Math.floor((event.clientX - rect.left) / cellSize);
+          const y = Math.floor((event.clientY - rect.top) / cellSize);
+
+          if (isValidMove(x, y)) {
+              board[x][y] = currentPlayer;
+              //currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+              socket.emit('send-message', message = {type: "move", gameState: board} , room = clientGameID)
+              drawBoard();
+              checkForWin();
+          }
+      });
+
+      function clearBoard() {
+        board = Array.from({ length: boardSize }, () => Array(boardSize).fill(''));
+        socket.emit('send-message', message = {type: "move", gameState: board} , room = clientGameID)
+        gameOver = false
+        drawBoard();
+      }
+
+      function drawBoard() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          for (let x = 0; x < boardSize; x++) {
+              for (let y = 0; y < boardSize; y++) {
+                  const cell = board[x][y];
+                  if (cell !== '') {
+                      ctx.font = '48px Arial';
+                      ctx.fillText(cell, x * cellSize + 30, y * cellSize + 70);
+                  }
+              }
+          }
+
+          drawGrid();
+      }
+
+      function drawGrid() {
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+
+          for (let i = 1; i < boardSize; i++) {
+              const pos = i * cellSize;
+              ctx.beginPath();
+              ctx.moveTo(pos, 0);
+              ctx.lineTo(pos, canvas.height);
+              ctx.moveTo(0, pos);
+              ctx.lineTo(canvas.width, pos);
+              ctx.stroke();
+          }
+      }
+
+      function isValidMove(x, y) {
+          return board[x][y] === '';
+      }
+
+      function checkForWin() {
+          const winningCombinations = [
+              [[0, 0], [0, 1], [0, 2]],
+              [[1, 0], [1, 1], [1, 2]],
+              [[2, 0], [2, 1], [2, 2]],
+              [[0, 0], [1, 0], [2, 0]],
+              [[0, 1], [1, 1], [2, 1]],
+              [[0, 2], [1, 2], [2, 2]],
+              [[0, 0], [1, 1], [2, 2]],
+              [[0, 2], [1, 1], [2, 0]],
+          ];
+
+          for (const combination of winningCombinations) {
+              const [a, b, c] = combination;
+              if (board[a[0]][a[1]] && board[a[0]][a[1]] === board[b[0]][b[1]] && board[a[0]][a[1]] === board[c[0]][c[1]]) {
+                  gameOver = true;
+                  alert(`${board[a[0]][a[1]]} wins!`);
+                  clearBoard(board)
+                  announceToChatLog(`${username} won.`)
+                  return;
+              }
+          }
+
+          const isTie = board.every(row => row.every(cell => cell !== ''));
+          if (isTie) {
+              gameOver = true;
+              alert('It\'s a tie!');
+              clearBoard(board)
+              announceToChatLog("It was a tie.")
+          }
+      }
+
+      drawBoard();
+  </script>
+
+  <!-------------------------------------------------->
+  <!-------------------------------------------------->
+  <!-------------------------------------------------->
+
   <div>
     <div id="chat-log" tabindex="0" style="border: 1px solid; overflow-y: auto; max-height: 50vh;"></div>
     <label for="message-input">Message</label>
@@ -59,10 +178,24 @@
     announceToChatLog(`Client ${socket.id} connected to the WebSocket`)
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
     
-    socket.emit('join-game', room = clientGameID, gameState => {
-      gameState.forEach( message => {
+    socket.emit('join-game', room = clientGameID, game => {
+      game.chatLog.forEach( message => {
         addMessageToChatLog(message)
       })
+      board = game.gameState
+      players = game.players
+      console.log(players)
+      console.log(players.includes(username))
+      console.log(players.length < 2 && !players.includes(username))
+      if ( players.length < 2 && !players.includes(username) ) { // if room for player and player is not already in game
+        socket.emit('send-message', message = {type: "addPlayer", player: username} , room = clientGameID ) // then add player to game
+        currentPlayer = ["X", "O"][players.size] // and update player symbol in local client file
+      }
+      if ( players[0] == username) { currentPlayer = "X" }
+      if ( players[1] == username) { currentPlayer = "O" }
+      console.log(currentPlayer)
+      updatePlayerList(players)
+      drawBoard();
     })
   })
 
@@ -73,7 +206,13 @@
 
   socket.on('receive-message', message => {
     console.log(`received messaged from server: ${message}`)
-    addMessageToChatLog(message)
+    if (message.type == "chat") { addMessageToChatLog(message) }
+    if (message.type == "move") { board = message.gameState; drawBoard() }
+    if (message.type == "addPlayer") { players.push(message.player) }
+    if (message.type == "removePlayer") {
+      if (players[1] == message.player) { players.pop() } else { players.shift() }
+      updatePlayerList(players)
+    }
   })
 
   //socket.on("disconnect", () => {})
@@ -83,14 +222,14 @@
   const chatLog = document.getElementById('chat-log')
 
   sendButton.addEventListener('click', () => {
-    const message = {author: username, text: messageInput.value}
+    const message = {type: "chat", author: username, text: messageInput.value}
     socket.emit('send-message', message, room = clientGameID)
     messageInput.value = ""
   })
 
   messageInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
-      const message = {author: username, text: messageInput.value}
+      const message = {type: "chat", author: username, text: messageInput.value}
       socket.emit('send-message', message, room = clientGameID)
       messageInput.value = ""
     }
@@ -102,10 +241,31 @@
     document.getElementById('chat-log').append(div)
   }
 
-  function announceToChatLog(errorMessage) {
+  function announceToChatLog(announcement) {
     let div = document.createElement("div")
-    div.innerHTML = errorMessage
+    div.innerHTML = announcement
     document.getElementById('chat-log').append(div)
+  }
+
+  function updatePlayerList(players) {
+    let divOne = document.createElement("div")
+    divOne.innerHTML = `${"X"}:  ${players[0]}`
+    document.getElementById('player-list').append(divOne)
+    let divTwo = document.createElement("div")
+    divTwo.innerHTML = `${"O"}:  ${players[1]}`
+    document.getElementById('player-list').append(divTwo)
+  }
+
+  function updateLeaveOrJoinGameButton(leaveOrJoin) {
+    button = document.getElementById('leave-or-join-game')
+    if ( players.includes(username)) {
+      socket.emit('send-message', message = {type: "removePlayer", player: username} , room = clientGameID )
+      button.innerHTML = "Join"
+    }
+    if ( !players.includes(username)) {
+      socket.emit('send-message', message = {type: "addPlayer", player: username} , room = clientGameID )
+      button.innerHTML = "Leave"
+    }
   }
 
 </script>
