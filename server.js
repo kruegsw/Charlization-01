@@ -55,7 +55,7 @@ initializeSocketIO(io)
 io.engine.use(sessionMiddleware);
 
 function checkAuthenticated(req, res, next) {
-    logger.info("checkAuthenticated middleware")
+    //logger.info("checkAuthenticated middleware")
     //logger.info(`req/isAuthenticated() is ${req.isAuthenticated()}`)
     if (req.isAuthenticated()) {
         return next()
@@ -65,7 +65,7 @@ function checkAuthenticated(req, res, next) {
 }
 
 function checkNotAuthenticated(req, res, next) {
-    logger.info("checkNotAuthenticated middleware")
+    //logger.info("checkNotAuthenticated middleware")
     if (req.isAuthenticated()) {
         return res.redirect('/')
     }

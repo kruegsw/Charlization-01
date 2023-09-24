@@ -58,7 +58,11 @@ function initialize (io) {
             const game = await Game.findOne({ _id: room })
             callback(game.gameState)
             logger.info(`Client (username: ${user}, socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
-    
+            
+            const joinedMessage = `${user} joined chat at ${Date(Date.now())}`
+            io.in(room).emit('receive-message', {author: user, text: joinedMessage} )
+            updateGameState(gameId = room, {author: user, text: joinedMessage} )
+
             ///////////////////////////////////////////////////// clean this up, move to separate event?
             //let roomClientsSet = io.sockets.adapter.rooms.get(room)
             //let roomClients = Array.from(roomClientsSet).join(',')
