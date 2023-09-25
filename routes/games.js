@@ -1,11 +1,13 @@
 //require('dotenv').config()
 
 const express = require("express")
+const fs = require("fs");
 const logger = require("../logger")
 const router = express.Router()
 //const passport = require('passport')
 const Game = require("../models/Game")
 const User = require("../models/User")
+
 
 router.get("/", async (req, res) => {
     
@@ -59,7 +61,8 @@ router.get('/:id', async (req, res) => {
     res.render("games/play.ejs", {
         username: req.session.passport.user,
         game: game,
-        socketURL: process.env.SOCKET_IO_URL
+        socketURL: process.env.SOCKET_IO_URL,
+        sslPrivateKey: fs.readFileSync(process.env.PATH_TO_SSL_PRIVATE_KEY),
     })
 })
 

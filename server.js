@@ -2,7 +2,11 @@ require('dotenv').config() // sensitive data
 
 const express = require('express')
 const { Server } = require("socket.io");
-const { createServer } = require("http")
+//const { createServer } = require("http")
+
+const fs = require("fs");
+const { createServer } = require("https")
+
 const passport = require('passport')
 const session = require('express-session')
 const flash = require('express-flash')
@@ -45,7 +49,12 @@ app.use('/', checkAuthenticated, mainRouter)
 app.use('/users', checkAuthenticated, userRouter)
 app.use('/games', checkAuthenticated, gameRouter)
 
-const httpServer = createServer(app);
+//const httpServer = createServer(app);
+const httpServer = createServer({
+    key: fs.readFileSync(process.env.PATH_TO_SSL_PRIVATE_KEY),
+    cert: fs.readFileSync(process.env.PATH_TO_SSL_CERTIFICATE)
+  }, app)
+
 //const io = new Server(httpServer, { /* options */ });
 const io = new Server(httpServer, {'transports': ['websocket', 'polling']}); // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
 

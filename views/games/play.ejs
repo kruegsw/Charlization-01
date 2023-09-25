@@ -161,13 +161,17 @@
   var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
   var clientGameID = '<%- game._id %>'
   var username = '<%- username %>'
+  //var sslPrivateKey = '<- sslPrivateKey >'
   //console.log(clientSocketURL)
 
   const socket = io(`${clientSocketURL}`,
     {transports: ['websocket', 'polling'], // Default value: ["polling", "websocket", "webtransport"]
     auth: {
       token: "this is a token"
-    }}
+    },
+    //key: sslPrivateKey,
+    //secure: true,
+  }
   );
   // trasports options must be specified for mobile browser client, see:
   // https://stackoverflow.com/questions/23946683/socket-io-bad-request-with-response-code0-messagetransport-unknown
