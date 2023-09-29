@@ -61,19 +61,13 @@ function initialize (io) {
             //logger.info("room is: " + room)
             socket.join(room)
             const game = await Game.findOne({ _id: room })
+            console.log(game)
             callback(game)
-            logger.info(`Client (username: socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
+            //logger.info(`Client (username: socket.id = ${socket.id}) connected to the room ${room} at ${Date(Date.now())}`) // id randomly assigned to client
             
             //const joinedMessage = `${user} joined chat at ${Date(Date.now())}`
             //io.in(room).emit('receive-message', {author: user, text: joinedMessage} )
             //updateGameState(gameId = room, {author: user, text: joinedMessage} )
-
-            ///////////////////////////////////////////////////// clean this up, move to separate event?
-            //let roomClientsSet = io.sockets.adapter.rooms.get(room)
-            //let roomClients = Array.from(roomClientsSet).join(',')
-            //cb(roomClients) // list of all clients connected to room
-            //console.log(roomClients)
-            ///////////////////////////////////////////////////// clean this up, move to separate event?
         })
     
         socket.on('send-message', (message, room) => {
@@ -83,8 +77,8 @@ function initialize (io) {
             if (room === "" && message.type == "chat") {
                 io.emit('receive-message', message )
             } else {
-                io.in(room).emit('receive-message', message )
-                updateGameState(gameId = room, message )
+                io.in(room).emit('receive-message', message ) // broadcast client message to all other clients in room
+                updateGameState(gameId = room, message ) // update game state in mongodb
             }
         });
         
@@ -94,10 +88,8 @@ function initialize (io) {
         const game = await Game.findOne({ _id: gameId })
         if (message.type == "chat") { game.chatLog.push({author: message.author, text: message.text}) }
         if (message.type == "move") { game.gameState = message.gameState }
-        if (message.type == "addPlayer") { game.players.push(message.player) }
-        if (message.type == "removePlayer") {
-            if (game.players[1] == message.player) { game.players.pop() } else { game.players.shift() }
-        }
+        if (message.type == "addPlayer") { game.players.push({ username: message.username, symbol: message.symbol }) }
+        if (message.type == "removePlayer") { game.players.filter( player => player.username !== message.username )}
         game.save()
     }
 }

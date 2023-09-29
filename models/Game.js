@@ -1,6 +1,11 @@
 const mongoose = require('mongoose')
 //const User = require("../models/User")
 
+const playerSchema = new mongoose.Schema({
+    username: String,
+    symbol: String
+})
+
 const gameSchema = new mongoose.Schema({
     gameName: String,
     gameState: {
@@ -12,14 +17,8 @@ const gameSchema = new mongoose.Schema({
         author: String,
         message: String,
     },
-    createdBy: String, //{
-        //type: mongoose.SchemaTypes.ObjectId,
-        //ref: "User" // reference to user model
-    //},
-    players: {
-        type: Array,
-        max: 2,
-    },
+    createdBy: String,
+    players: [playerSchema],
     createdAt: {
         type: Date,
         immutable: true,

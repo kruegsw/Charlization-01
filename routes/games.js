@@ -32,7 +32,11 @@ router.get('/new', (req, res) => {
 router.post('/new', async (req, res) => {
     logger.info("app.post /games/new middleware")
     try {
-        const game = new Game({ gameName: req.body.gameName, createdBy: req.session.passport.user })
+        const game = new Game({
+            gameName: req.body.gameName,
+            createdBy: req.session.passport.user,
+            players: [ { username: req.session.passport.user, symbol: "Observer" } ]
+        })
         //const user = await User.findById(req.session.passport.user)
         //const game = new Game({ gameName: req.body.gameName, createdBy: user._id })
         await game.save()   

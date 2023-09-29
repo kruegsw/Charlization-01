@@ -24,20 +24,28 @@
   
   <row>
     <canvas id="game-board" width="300" height="300"></canvas>
-    <button id="leave-or-join-game" onclick=updateLeaveOrJoinGameButton()>Leave Game</button>
-    <div id="player-list"></div>
+    <!-- <button id="leave-or-join-game" onclick=updateLeaveOrJoinGameButton(game)>Leave Game</button> -->
+    <!-- <div id="player-list"></div> -->
   </row>
 
   <script>
+
+    var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
+    var gameJSONText = `<%- JSON.stringify(game) %>` // ridiculous workaround
+    var game = JSON.parse(gameJSONText) // ridiculous workaround
+    var username = '<%- username %>'
+    //var sslPrivateKey = '<- sslPrivateKey >'
+    //console.log(clientSocketURL)
+
       const canvas = document.getElementById('game-board');
       const ctx = canvas.getContext('2d');
 
       const cellSize = 100;
       const boardSize = 3;
       let board = Array.from({ length: boardSize }, () => Array(boardSize).fill(''));
-      let players = []
-      let currentPlayer
+      let currentPlayer = username
       let gameOver = false;
+      let players
 
       canvas.addEventListener('click', (event) => {
           if (gameOver) return;
@@ -49,7 +57,7 @@
           if (isValidMove(x, y)) {
               board[x][y] = currentPlayer;
               //currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-              socket.emit('send-message', message = {type: "move", gameState: board} , room = clientGameID)
+              socket.emit('send-message', message = {type: "move", gameState: board} , room = game._id)
               drawBoard();
               checkForWin();
           }
@@ -57,7 +65,7 @@
 
       function clearBoard() {
         board = Array.from({ length: boardSize }, () => Array(boardSize).fill(''));
-        socket.emit('send-message', message = {type: "move", gameState: board} , room = clientGameID)
+        socket.emit('send-message', message = {type: "move", gameState: board} , room = game._id)
         gameOver = false
         drawBoard();
       }
@@ -158,12 +166,6 @@
 
 <!-- workaround to pass server side EJS variable to client side JS variable -->
 <script>
-  var clientSocketURL = '<%- socketURL %>' // test is now a valid js object
-  var clientGameID = '<%- game._id %>'
-  var username = '<%- username %>'
-  //var sslPrivateKey = '<- sslPrivateKey >'
-  //console.log(clientSocketURL)
-
   const socket = io(`${clientSocketURL}`,
     {transports: ['websocket', 'polling'], // Default value: ["polling", "websocket", "webtransport"]
     auth: {
@@ -181,24 +183,18 @@
 
     announceToChatLog(`Client ${socket.id} connected to the WebSocket`)
     // console.log(`Client ${socket.id} connected to the WebSocket`) // id randomly assigned to client
+    currentPlayer = username // and update player symbol in local client file
     
-    socket.emit('join-game', room = clientGameID, game => {
+    socket.emit('join-game', room = game._id, game => {
+      console.log(game)
       game.chatLog.forEach( message => {
         addMessageToChatLog(message)
       })
-      board = game.gameState
-      players = game.players
-      console.log(players)
-      console.log(players.includes(username))
-      console.log(players.length < 2 && !players.includes(username))
-      if ( players.length < 2 && !players.includes(username) ) { // if room for player and player is not already in game
-        socket.emit('send-message', message = {type: "addPlayer", player: username} , room = clientGameID ) // then add player to game
-        currentPlayer = ["X", "O"][players.size] // and update player symbol in local client file
+      if ( !game.players.find( player => player.username === username ) ) { // if room for player and player is not already in game
+        socket.emit('send-message', message = {type: "addPlayer", username: username, symbol: "Observer" } , room = game._id ) // then add player to game
       }
-      if ( players[0] == username) { currentPlayer = "X" }
-      if ( players[1] == username) { currentPlayer = "O" }
-      console.log(currentPlayer)
-      updatePlayerList(players)
+      //updatePlayerList(game.players)
+      board = game.gameState
       drawBoard();
     })
   })
@@ -209,14 +205,12 @@
   })
 
   socket.on('receive-message', message => {
-    console.log(`received messaged from server: ${message}`)
+    console.log(`received messaged from server: ${JSON.stringify(message)}`)
     if (message.type == "chat") { addMessageToChatLog(message) }
     if (message.type == "move") { board = message.gameState; drawBoard() }
-    if (message.type == "addPlayer") { players.push(message.player) }
-    if (message.type == "removePlayer") {
-      if (players[1] == message.player) { players.pop() } else { players.shift() }
-      updatePlayerList(players)
-    }
+    //if (message.type == "addPlayer") { updatePlayerList(game.players)  }
+    //if (message.type == "removePlayer") { updatePlayerList(game.players) }
+    if (message.type == "announcement") { announceToChatLog(message) }
   })
 
   //socket.on("disconnect", () => {})
@@ -227,14 +221,14 @@
 
   sendButton.addEventListener('click', () => {
     const message = {type: "chat", author: username, text: messageInput.value}
-    socket.emit('send-message', message, room = clientGameID)
+    socket.emit('send-message', message, room = game._id)
     messageInput.value = ""
   })
 
   messageInput.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
       const message = {type: "chat", author: username, text: messageInput.value}
-      socket.emit('send-message', message, room = clientGameID)
+      socket.emit('send-message', message, room = game._id)
       messageInput.value = ""
     }
   });
@@ -246,31 +240,30 @@
   }
 
   function announceToChatLog(announcement) {
-    let div = document.createElement("div")
-    div.innerHTML = announcement
-    document.getElementById('chat-log').append(div)
+    const message = {type: "chat", author: "announcement", text: announcement}
+    socket.emit('send-message', message, room = game._id)
   }
 
+  /*
   function updatePlayerList(players) {
-    let divOne = document.createElement("div")
-    divOne.innerHTML = `${"X"}:  ${players[0]}`
-    document.getElementById('player-list').append(divOne)
-    let divTwo = document.createElement("div")
-    divTwo.innerHTML = `${"O"}:  ${players[1]}`
-    document.getElementById('player-list').append(divTwo)
+    players.each( (player) => {
+      let div = document.createElement("div")
+      div.innerHTML = `${player.username}:  ${player.symbol}`
+      document.getElementById('player-list').append(div)
+    })
   }
 
-  function updateLeaveOrJoinGameButton(leaveOrJoin) {
+  function updateLeaveOrJoinGameButton(game) {
     button = document.getElementById('leave-or-join-game')
-    if ( players.includes(username)) {
-      socket.emit('send-message', message = {type: "removePlayer", player: username} , room = clientGameID )
+    if ( !game.players.find( player => player.username === username )) {
+      socket.emit('send-message', message = {type: "addPlayer", username: username, symbol: username } , room = game._id )
+      button.innerHTML = "Leave"
+    } else {
+      socket.emit('send-message', message = {type: "removePlayer", username: username} , room = game._id )
       button.innerHTML = "Join"
     }
-    if ( !players.includes(username)) {
-      socket.emit('send-message', message = {type: "addPlayer", player: username} , room = clientGameID )
-      button.innerHTML = "Leave"
-    }
   }
+  */
 
 </script>
 
