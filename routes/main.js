@@ -12,6 +12,14 @@ router.get('/', (req, res) => {
     //console.log(req)
 })
 
+router.get('/', function(req, res) {
+    res.render('index.ejs');
+});
+
+router.get('/canvas', (req, res) => {
+    res.render('canvas.html')
+})
+
 router.get('/about', (req, res) => {
     res.render('about.ejs', { username: req.session.passport.user })
 })

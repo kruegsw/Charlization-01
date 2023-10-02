@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<canvas id="canvas" width="1600" height="900"></canvas>
+
+<script>
+	
+	class Board {
+		constructor(x, y) {
+			this.size = {x: x, y: y}
+			this.tiles = []
+			this.buildMap()
+			this.setPlayersInitialLocations()
+		}
+
+		buildMap() {
+			for (let i = 0; i < this.size.x; i++) {
+				let column = []
+				for (let j = 0; j < this.size.y; j++) {
+					column.push(new Tile(i, j) )
+				}
+				this.tiles.push(column)
+			}
+			console.log(this.tiles)
+		}
+
+
+		setPlayersInitialLocations() {
+			let x = Math.floor(Math.random() * this.size.x)
+			let y = Math.floor(Math.random() * this.size.y)
+			this.tiles[x][y].unit = new Unit({x, y})
+			console.log({x, y})
+		}
+	}
+
+	class Tile {
+		constructor(x, y) {
+			this.terrain = this.generateTerrain()
+			this.unit = ""
+			this.coordinates = {x: x, y: y}
+		}
+
+		generateTerrain() {
+			let terrainTypes = Object.keys(Tile.TERRAIN_TYPES)
+			return terrainTypes[Math.floor(Math.random() * terrainTypes.length)]
+		}
+
+
+		static TERRAIN_TYPES = {
+			"grassland": { color: "lightgreen" },
+			"plains": { color: "orange" },
+			"forest": { color: "darkgreen" },
+			"desert": { color: "beige" },
+			"hill": { color: "lightgrey" },
+			"mountain": { color: "grey" },
+			"ocean": { color: "blue" }
+		}
+
+	}
+
+	class Unit {
+		constructor(coordinates) {
+			this.selectable = true
+			this.color = "red"
+			this.coordinates = coordinates
+			//this.selected = false
+		}
+	}
+
+	class Canvas {
+		constructor(canvasID, board) {
+			this.canvas = document.getElementById(canvasID)
+			this.ctx = canvas.getContext("2d")
+			this.board = board
+		}
+
+		static TILE_SIZE = 10
+
+		paintTile(x, y, width = Canvas.TILE_SIZE, height = Canvas.TILE_SIZE) {
+			this.ctx.fillRect(x*Canvas.TILE_SIZE, y*Canvas.TILE_SIZE, width, height)
+		}
+
+		drawMap() {
+			this.board.tiles.forEach( (x, i) => {																									// for each x row with index i
+				x.forEach( (y, j) => {																													// for each y tile with index j in x row
+					if (y.unit) {
+						this.ctx.fillStyle = y.unit.color
+					} else {
+						this.ctx.fillStyle = Tile.TERRAIN_TYPES[y.terrain].color																			// set fill color based on terrain type
+	  			}
+	  			this.paintTile(i, j)			// paint tile with color
+				})
+			})
+		}
+	}
+
+	canvas = new Canvas(canvasID = "canvas", new Board(x = 160, y = 90) )
+	canvas.drawMap()
+
+	//const canvas = document.getElementById("canvas")
+	//const ctx = canvas.getContext("2d")
+	console.log(canvas.canvas)
+	console.log(canvas.ctx)
+	console.log(canvas.board)
+
+	let selectedUnit
+	let selectedLocation
+	let lastTime = Date.now()
+	animate()
+
+	function animate() {
+		window.requestAnimationFrame(animate)
+		if ( (Date.now() - lastTime) < 1000 ) { return }
+		console.log(Date.now() - lastTime)
+		if (selectedUnit) {blinkSelectedUnit(selectedUnit)}
+		lastTime = Date.now()
+	}
+	window.requestAnimationFrame(animate)
+
+	let blink = 0
+	function blinkSelectedUnit(target) {
+		blink++
+		let {x, y} = target.coordinates
+		if (blink % 2 === 0) {canvas.ctx.fillStyle = target.color} else {canvas.ctx.fillStyle = Tile.TERRAIN_TYPES[canvas.board.tiles[x][y].terrain].color}
+		canvas.paintTile(x, y)
+	}
+
+	canvas.canvas.addEventListener("click", (event) => {
+		const rect = canvas.canvas.getBoundingClientRect();
+    let x = Math.floor((event.x - rect.left) / Canvas.TILE_SIZE);
+    let y = Math.floor((event.y - rect.top) / Canvas.TILE_SIZE);
+		selectUnit(canvas.board.tiles[x][y])
+		selectLocation(x, y)
+		console.log(selectedUnit)
+		console.log(selectedLocation)
+
+		//console.log(Date.now())
+		//console.log(lastTime)
+		//console.log(Date.now() - lastTime)
+	})
+
+	///////
+
+	document.addEventListener("keydown", (e) => {
+		console.log(e)
+	  if (!e.repeat) {
+	    console.log(`Key "${e.key}" pressed [event: keydown]`);
+	    if (selectedUnit) {
+	    	let command = keydownCommand(e.key)
+	    	if (command.type === "move") {
+	    		moveUnit(command.direction)
+	    		canvas.drawMap()
+	    	}
+	    }
+	  } else {
+	    console.log(`Key "${e.key}" repeating [event: keydown]`);
+		}
+	});
+
+	document.addEventListener("beforeinput", (e) => {
+	  console.log(`Key "${e.data}" about to be input [event: beforeinput]`);
+	});
+
+	document.addEventListener("input", (e) => {
+	  console.log(`Key "${e.data}" input [event: input]`);
+	});
+
+	document.addEventListener("keyup", (e) => {
+	  console.log(`Key "${e.key}" released [event: keyup]`);
+	});
+
+	///////
+
+	function keydownCommand(key) {
+		if (key === "ArrowUp") { return { type: "move", direction: { x: 0, y: -1 } } }
+		if (key === "ArrowDown") { return { type: "move", direction: { x: 0, y: 1 } } }
+		if (key === "ArrowLeft") { return { type: "move", direction: { x: -1, y: 0 } } }
+		if (key === "ArrowRight") { return { type: "move", direction: { x: 1, y: 0 } } }
+	}
+
+	function moveUnit(direction) {
+		//console.log(`move unit x: ${direction.x}, y: ${direction.y}`)
+		//let currentLocation = selectedUnit
+		let currentTile = canvas.board.tiles[selectedLocation.x][selectedLocation.y]
+		let destinationTile = canvas.board.tiles[selectedLocation.x+direction.x][selectedLocation.y+direction.y]
+		currentTile.unit = ""
+		destinationTile.unit = selectedUnit
+	}
+
+	function selectUnit(target) {
+		if (target.unit.selectable) {
+			selectedUnit = target.unit
+		}	else {
+			selectedUnit = undefined
+		}
+	}
+
+	function selectLocation(x, y) {
+		selectedLocation = { x: x, y: y}
+	}
+
+</script>
+
+</html>

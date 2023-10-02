@@ -36,7 +36,9 @@ const sessionMiddleware = session({
 })
 
 const app = express()
-app.set('view-engine', 'ejs')
+//app.set('view-engine', 'ejs')
+app.set('view engine', 'html');
+app.engine('html', require('ejs').renderFile);
 app.use(sessionMiddleware)
 initializePassport(passport, user => User.findOne({ username: user }), (user, id) => user.id === id )
 app.use(passport.initialize())
