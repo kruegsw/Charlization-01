@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width-device-width, initial-scale=1.0">
+	<title>Charlization-canvas1</title>
+	<!--
+	<style>
+		#canvas1 {
+			position: absolute;
+			background: black;
+			width: 100%;
+			height: 100%;
+			top: 0;
+			left: 0;
+		}
+	</style>
+	-->
+</head>
+<body>
+	<canvas id="canvas1" width="1000" height="1000"></canvas>
+</body>
+<script>
+
+	class Game {
+		constructor(canvasID, localPlayer, board ) {
+			this.localPlayer = localPlayer
+			this.canvas = new Canvas(canvasID, board)
+			this.setPlayersInitialLocations()
+			//this.canvas.renderMap()
+			this.initializeListeners()
+			window.requestAnimationFrame(() => {this.gameLoop()})
+			console.log(this.canvas)
+		}
+
+		gameLoop() {
+			this.canvas.ctx.clearRect(0, 0, this.canvas.canvas.width, this.canvas.canvas.height)
+			this.canvas.renderMap()
+			if (this.localPlayer.selectedUnit) { this.blinkSelectedUnit() }
+			window.requestAnimationFrame(() => {this.gameLoop()})
+		}
+
+		blinkSelectedUnit() {
+			let selectedTile = this.localPlayer.selectedTile
+			//if ( (Math.floor(Date.now() / 500)) % 3 === 0 ) { this.canvas.ctx.fillStyle = Tile.TERRAIN_TYPES[selectedTile.terrain].color }
+			if ( (Math.floor(Date.now() / 500)) % 3 === 0 ) { this.canvas.renderUnit(selectedTile) } else { this.canvas.renderTerrain(selectedTile) }
+		}
+
+		moveUnitInDirection(direction) {
+			let currentTile = this.localPlayer.selectedTile
+			let x = currentTile.coordinates.x
+			let y = currentTile.coordinates.y
+			let dx = direction.x
+			let dy = direction.y
+			let destinationTile = this.canvas.board.tiles[x+dx][y+dy]
+			
+			currentTile.removeUnit(this.localPlayer.selectedUnit)
+			destinationTile.addUnit(this.localPlayer.selectedUnit)
+
+			this.localPlayer.selectedUnit.coordinates = destinationTile.coordinates
+			this.localPlayer.selectTile(destinationTile)
+		}
+
+		moveUnitToTile(tile) {
+			let currentTile = this.localPlayer.selectedTile
+			let x = currentTile.coordinates.x
+			let y = currentTile.coordinates.y
+			let destinationTile = tile
+			
+			currentTile.removeUnit(this.localPlayer.selectedUnit)
+			destinationTile.addUnit(this.localPlayer.selectedUnit)
+
+			this.localPlayer.selectedUnit.coordinates = destinationTile.coordinates
+			this.localPlayer.selectTile(destinationTile)
+
+			//this.canvas.renderMap()
+		}
+
+		setPlayersInitialLocations() {
+			let x = Math.floor(Math.random() * this.canvas.board.size.x)
+			let y = Math.floor(Math.random() * this.canvas.board.size.y)
+			let tile = this.canvas.board.tiles[x][y]
+			tile.unit = new Unit(this.localPlayer, {x, y})
+		}
+
+		deselectUnit() {
+			this.localPlayer.selectedUnit = null
+		}
+
+		deselectTile() {
+			this.localPlayer.selectedTile = null
+		}
+
+		initializeListeners() {
+			
+			document.addEventListener("keydown", (e) => {
+				console.log(e)
+			if (!e.repeat) {
+				console.log(`Key "${e.key}" pressed [event: keydown]`);
+				if (this.localPlayer.selectedUnit) {
+					let command = keydownCommand(e.key)
+					if (command.type === "move") {
+						this.moveUnitInDirection(command.direction)
+						//this.canvas.renderMap()
+					}
+					if (command.type === "escape") {
+						//this.canvas.renderTile(this.localPlayer.selectedTile)
+						this.deselectTile()
+						this.deselectUnit()
+					}
+				}
+			} else {
+				console.log(`Key "${e.key}" repeating [event: keydown]`);
+				}
+			});
+
+			/*
+			document.addEventListener("beforeinput", (e) => {
+			console.log(`Key "${e.data}" about to be input [event: beforeinput]`);
+			});
+
+			document.addEventListener("input", (e) => {
+			console.log(`Key "${e.data}" input [event: input]`);
+			});
+
+			document.addEventListener("keyup", (e) => {
+			console.log(`Key "${e.key}" released [event: keyup]`);
+			});
+
+			*/
+
+			function keydownCommand(key) {
+				//console.log(key)
+				if (key === "ArrowUp") { return { type: "move", direction: { x: 0, y: -1 } } }
+				if (key === "ArrowDown") { return { type: "move", direction: { x: 0, y: 1 } } }
+				if (key === "ArrowLeft") { return { type: "move", direction: { x: -1, y: 0 } } }
+				if (key === "ArrowRight") { return { type: "move", direction: { x: 1, y: 0 } } }
+				if (key === "Escape") { return { type: "escape" } }
+			}
+
+			this.canvas.canvas.addEventListener("click", (event) => {
+				const rect = this.canvas.canvas.getBoundingClientRect()
+				mouse.x = Math.floor((event.x - rect.left) / this.canvas.tileSize)
+				mouse.y = Math.floor((event.y - rect.top) / this.canvas.tileSize)
+
+				if (this.localPlayer.selectedUnit) {
+					let targetTile = this.canvas.board.tiles[mouse.x][mouse.y]
+					this.moveUnitToTile(targetTile)
+					this.localPlayer.selectTile(targetTile)
+					this.localPlayer.selectUnit(targetTile)
+				} else {
+					const rect = this.canvas.canvas.getBoundingClientRect()
+					let targetTile = this.canvas.board.tiles[mouse.x][mouse.y]
+					this.localPlayer.selectTile(targetTile)
+					this.localPlayer.selectUnit(targetTile)
+				}
+			})
+
+			this.canvas.canvas.addEventListener('mousemove', () => {
+				mouse.x = event.x
+				mouse.y = event.y
+			})
+		}
+	}
+	
+	class Board {
+		constructor(x, y) {
+			this.size = {x: x, y: y}
+			this.tiles = []
+			this.buildMap()
+		}
+
+		buildMap() {
+			for (let i = 0; i < this.size.x; i++) {
+				let column = []
+				for (let j = 0; j < this.size.y; j++) {
+					column.push(new Tile(i, j) )
+				}
+				this.tiles.push(column)
+			}
+		}
+	}
+
+	class Tile {
+		constructor(x, y) {
+			this.terrain = this.generateTerrain()
+			this.unit = ""
+			this.coordinates = {x: x, y: y}
+		}
+
+		generateTerrain() {
+			let terrainTypes = Object.keys(Tile.TERRAIN_TYPES)
+			return terrainTypes[Math.floor(Math.random() * terrainTypes.length)]
+		}
+
+		addUnit(unit) {
+			this.unit = unit
+		}
+
+		removeUnit(unit) {
+			this.unit = ""
+		}
+
+		static TERRAIN_TYPES = {
+			"grassland": { color: "lightgreen" },
+			"plains": { color: "orange" },
+			"forest": { color: "darkgreen" },
+			"desert": { color: "beige" },
+			"hill": { color: "lightgrey" },
+			"mountain": { color: "grey" },
+			"ocean": { color: "blue" }
+		}
+
+	}
+
+	class Unit {
+		constructor(player, coordinates) {
+			this.player = player
+			this.color = this.player.color
+			this.coordinates = coordinates
+			this.selectable = true
+			//this.selected = false
+		}
+	}
+
+	class Canvas {
+		constructor(canvasID, board) {
+			this.canvas = document.getElementById(canvasID)
+			this.ctx = this.canvas.getContext("2d")
+			this.adjustCanvasSizeToMatchBrowser()
+			this.adjustCanvasSizeWhenBrowserResizing()
+			this.board = board
+			this.tileSize = Math.min( Math.floor(this.canvas.offsetWidth / board.size.x), Math.floor(this.canvas.offsetHeight / board.size.y) )
+		}
+
+		adjustCanvasSizeToMatchBrowser() {
+			this.canvas.width = window.innerWidth
+			this.canvas.height = window.innerHeight
+		}
+
+		adjustCanvasSizeWhenBrowserResizing() {
+			window.addEventListener('reszie', () => {
+				this.adjustCanvasSizeToMatchBrowser()
+				//renderMap()
+			})
+		}
+
+		renderTerrain(tile) {
+			let x = tile.coordinates.x
+			let y = tile.coordinates.y
+			this.ctx.fillStyle = Tile.TERRAIN_TYPES[tile.terrain].color
+			let width = this.tileSize
+			let height = this.tileSize
+			this.ctx.fillRect(x*this.tileSize, y*this.tileSize, width, height)
+		}
+
+		renderUnit(tile) {
+			if (tile.unit) {
+				let x = tile.coordinates.x
+				let y = tile.coordinates.y
+				this.ctx.fillStyle = tile.unit.color
+				this.ctx.strokeStyle = "red"
+				this.ctx.lineWidth = 0
+				this.ctx.beginPath();
+				this.ctx.arc(x*this.tileSize+this.tileSize/2, y*this.tileSize+this.tileSize/2, this.tileSize*0.4, 0, Math.PI * 2)
+				this.ctx.stroke()
+				this.ctx.fill()
+			}
+		}
+
+		renderTile(tile) {
+			this.renderTerrain(tile)
+			this.renderUnit(tile)
+		}
+
+		//determineAppearance(tile) {
+		//	this.ctx.fillStyle = Tile.TERRAIN_TYPES[tile.terrain].color
+		//}
+
+		renderMap() {
+			this.board.tiles.forEach( (columnOfTiles, i) => {
+				columnOfTiles.forEach( (tile, j) => {
+				//this.determineAppearance(tile)
+	  			this.renderTile(tile)
+				})
+			})
+		}
+
+		/*
+		animate(selectedUnit, selectedTile) {
+			let lastTime
+			window.requestAnimationFrame(this.animate())
+			if ( (Date.now() - lastTime) < 1000 ) { return }
+			console.log(Date.now() - lastTime)
+			if (selectedUnit) {
+				if (Date.now() % 1000 % 2 === 0) {this.ctx.fillStyle = selectedTile.color} else {this.ctx.fillStyle = Tile.TERRAIN_TYPES[tile.terrain].color}
+				this.renderTerrain(selectedTile)
+			}
+			
+			lastTime = Date.now()
+		}
+		*/
+	}
+
+	class Player {
+		constructor(username, color) {
+			this.username = username
+			this.color = color
+			this.selectedUnit = ""
+			this.selectedTile = ""
+		}
+
+		selectUnit(tile) {
+			if (tile.unit.selectable) {
+				this.selectedUnit = tile.unit
+			}	else {
+				this.selectedUnit = undefined
+			}
+		}
+
+		selectTile(tile) {
+			this.selectedTile = tile
+		}
+
+	}
+
+	const game = new Game(
+		canvasID = "canvas1",
+		localPlayer = new Player("sdub", "red"),
+		board = new Board(x = 10, y = 10)
+	)
+
+	const mouse = { x: undefined, y: undefined }
+
+</script>
+
+</html>

@@ -16,8 +16,8 @@ router.get('/', function(req, res) {
     res.render('index.ejs');
 });
 
-router.get('/canvas', (req, res) => {
-    res.render('canvas.html')
+router.get('/canvas1', (req, res) => {
+    res.render('canvas1.html')
 })
 
 router.get('/about', (req, res) => {
