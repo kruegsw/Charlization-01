@@ -24,6 +24,10 @@ router.get('/about', (req, res) => {
     res.render('about.ejs', { username: req.session.passport.user })
 })
 
+router.get('/charlization', (req, res) => {
+    res.redirect(301, 'https://charlization.com:4000/')
+})
+
 router.post('/logout', function(req, res, next) {
     //logger.info("app.post /logout middleware")
     req.logout(function(err) {
