@@ -25,6 +25,9 @@ router.get('/about', (req, res) => {
 })
 
 router.get('/charlization', (req, res) => {
+    if (req.isAuthenticated()) {
+        return next()
+    }
     res.redirect(301, 'https://charlization.com:4000/')
 })
 
